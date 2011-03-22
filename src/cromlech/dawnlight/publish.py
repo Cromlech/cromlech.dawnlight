@@ -1,102 +1,88 @@
 # -*- coding: utf-8 -*-
 
-import sys
-from cromlech.io.interfaces import IPublisher
-from cromlech.zope.publication import Publication
-from grokcore.component import adapts, MultiAdapter
-from zope.component import queryAdapter
+import dawnlight
+import grokcore.component as grok
+from cromlech.dawnlight import IDawnlightApplication
+from dawnlight.interfaces import IConsumer
+from cromlech.io.interfaces import IPublisher, IRequest
+from zope.component import queryAdapter, queryMultiAdapter
 from zope.interface import implements, Interface
-from zope.publisher.browser import IBrowserRequest
-from zope.publisher.interfaces import Retry, IReRaiseException
 
 
-class ZopePublisher(MultiAdapter):
-    implements(IPublisher)
-    adapts(IBrowserRequest, Interface)
+class ModelLookup(dawnlight.ModelLookup):
+
+    def __init__(self):
+        pass
+    
+    def register(self, class_or_interface, consumer):
+        raise NotImplementedError()
+
+    def __call__(self, path, obj):
+        stack = dawnlight.parse_path(path)
+        return self.resolve(stack, obj)
+
+    def lookup(self, obj):
+        return grok.querySubscriptions(obj, IConsumer)
+
+
+class ViewLookup(dawnlight.ViewLookup):
+
+    default_view_name = u'index'
+
+    def __init__(self):
+        pass
+
+    def view_lookup_func(self, request, obj, name):
+        return queryMultiAdapter((obj, request), name=name)
+
+
+class DawnlightPublisher(grok.MultiAdapter):
+    grok.implements(IPublisher)
+    grok.adapts(IRequest, IDawnlightApplication)
+
+    model_lookup = ModelLookup()
+    view_lookup = ViewLookup()
 
     def __init__(self, request, app):
         self.app = app
         self.request = request
 
+    def _root_path(self, path):
+        if path.startswith(self.request.script_name):
+            return path[len(self.request.script_name):]
+        return path
+
     def publish(self, root, handle_errors=True):
-        to_raise = None
-        request = self.request
-        request.setPublication(Publication(root))
+        path = self._root_path(self.request.request.path)
+        model, unconsumed = self.model_lookup(path, root)
+        view = self.view_lookup(self.request, model, unconsumed)
+        return view()
 
-        while True:
-            publication = request.publication
+
+_marker = object()
+
+class DefaultConsumer(grok.Subscription):
+    grok.implements(IConsumer)
+    grok.context(Interface)
+
+    def _resolve(self, obj, ns, name):
+        if ns != u'default':
+            return None
+
+        attr = getattr(obj, name, _marker)
+        if attr is not _marker:
+            return attr
+        if hasattr(obj, '__getitem__'):
             try:
-                try:
-                    obj = None
-                    try:
-                        try:
-                            request.processInputs()
-                            publication.beforeTraversal(request)
+                return obj[name]
+            except (KeyError, TypeError):
+                pass
+        return None
 
-                            obj = publication.getApplication(request)
-                            obj = request.traverse(obj)
-                            publication.afterTraversal(request, obj)
-
-                            result = publication.callObject(request, obj)
-                            response = request.response
-                            if result is not response:
-                                response.setResult(result)
-
-                            publication.afterCall(request, obj)
-
-                        except:
-                            exc_info = sys.exc_info()
-                            publication.handleException(
-                                obj, request, exc_info, True)
-
-                            if not handle_errors:
-                                # Reraise only if there is no adapter
-                                # indicating that we shouldn't
-                                reraise = queryAdapter(
-                                    exc_info[1], IReRaiseException,
-                                    default=None)
-                                if reraise is None or reraise():
-                                    raise
-                    finally:
-                        publication.endRequest(request, obj)
-
-                    break  # Successful.
-
-                except Retry, retryException:
-                    if request.supportsRetry():
-                        # Create a copy of the request and use it.
-                        newrequest = request.retry()
-                        request.close()
-                        request = newrequest
-                    elif handle_errors:
-                        # Output the original exception.
-                        publication = request.publication
-                        publication.handleException(
-                            obj, request,
-                            retryException.getOriginalException(), False)
-                        break
-                    else:
-                        to_raise = retryException.getOriginalException()
-                        if to_raise is None:
-                            # There is no original exception inside
-                            # the Retry, so just reraise it.
-                            raise
-                        break
-
-            except:
-                # Bad exception handler or retry method.
-                # Re-raise after outputting the response.
-                if handle_errors:
-                    request.response.internalError()
-                    to_raise = sys.exc_info()
-                    break
-                else:
-                    raise
-
-        response = request.response
-        if to_raise is not None:
-            raise to_raise[0], to_raise[1], to_raise[2]
-
-        # Return the request, since it might be a different object than the one
-        # that was passed in.
-        return request
+    def __call__(self, stack, obj):
+        ns, name = stack.pop()
+        next_obj = self._resolve(obj, ns, name)
+        if next_obj is None:
+            stack.append((ns, name))
+            return False, obj, stack
+        return True, next_obj, stack

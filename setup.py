@@ -7,6 +7,7 @@ install_requires = [
     'grokcore.component',
     'setuptools',
     'cromlech.io',
+    'cromlech.request',
     'dawnlight',
     ]
 
