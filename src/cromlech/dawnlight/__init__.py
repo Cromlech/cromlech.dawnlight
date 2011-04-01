@@ -4,4 +4,4 @@ from zope.interface import Interface
 
 
 class IDawnlightApplication(Interface):
-    pass
+    """Application using the dawnlight publication mechanism"""

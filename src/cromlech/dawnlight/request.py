@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Declare request and response adapter for 
+dawnlight applications (IDawnlightApplication)
+"""
+
 
 try:
     import grokcore.component
