@@ -69,7 +69,7 @@ class DawnlightPublisher(grok.MultiAdapter):
 
     def publish(self, root, handle_errors=True):
         """Traverse and call view"""
-        path = self._root_path(self.request.request.path)
+        path = self._root_path(self.request.path)
         model, unconsumed = self.model_lookup(path, root)
         view = self.view_lookup(self.request, model, unconsumed)
         return view()
