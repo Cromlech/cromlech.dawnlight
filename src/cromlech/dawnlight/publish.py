@@ -6,8 +6,8 @@ from cromlech.browser.interfaces import ITraverser, IHTTPRenderer
 from cromlech.dawnlight import IDawnlightApplication
 from dawnlight.interfaces import IConsumer
 from cromlech.io.interfaces import IPublisher, IRequest
-from zope.component import queryAdapter, queryMultiAdapter
-from zope.interface import implements, Interface
+from zope.component import queryMultiAdapter
+from zope.interface import Interface
 
 
 class ModelLookup(dawnlight.ModelLookup):
@@ -15,9 +15,9 @@ class ModelLookup(dawnlight.ModelLookup):
 
     def __init__(self):
         pass
-    
+
     def register(self, class_or_interface, consumer):
-        """not needed consumers will be declared as subscribers for a context 
+        """not needed consumers will be declared as subscribers for a context
         implementing IConsumer
         """
         raise NotImplementedError()
@@ -48,7 +48,7 @@ class ViewLookup(dawnlight.ViewLookup):
 
 class DawnlightPublisher(grok.MultiAdapter):
     """The publisher using model and view lookup
-    
+
     same role as Application in dawnlight
     """
 
@@ -77,6 +77,7 @@ class DawnlightPublisher(grok.MultiAdapter):
 
 _marker = object()
 
+
 def traverse(consumer, stack, obj, request):
     """Furnish the base consumer __call__ methode delegating
     resolution to the _resolve method"""
@@ -94,7 +95,7 @@ class AttributeConsumer(grok.Subscription):
     """
     grok.implements(IConsumer)
     grok.context(Interface)
-    grok.order(1100) # intend to be first !
+    grok.order(1100)  # intend to be first !
 
     __call__ = traverse
 
@@ -112,11 +113,11 @@ class ItemConsumer(grok.Subscription):
     """
     grok.implements(IConsumer)
     grok.context(Interface)
-    grok.order(1000) # intend to be second !
+    grok.order(1000)  # intend to be second !
 
     __call__ = traverse
-    
-    def _resolve(self, obj, ns, name, request): 
+
+    def _resolve(self, obj, ns, name, request):
         if ns == u'default':
             if hasattr(obj, '__getitem__'):
                 try:
@@ -132,12 +133,12 @@ class TraverserConsumer(grok.Subscription):
     """
     grok.implements(IConsumer)
     grok.context(Interface)
-    grok.order(900) # intend to be third !
+    grok.order(900)  # intend to be third !
 
     __call__ = traverse
 
     def _resolve(self, obj, ns, name, request):
-        traverser = queryMultiAdapter((obj, request), ITraverser, name=name)
+        traverser = queryMultiAdapter((obj, request), ITraverser, name=ns)
         if traverser:
             return traverser.traverse(ns, name)
         return None
