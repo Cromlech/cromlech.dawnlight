@@ -4,8 +4,9 @@ import os
 version = '0.1'
 
 install_requires = [
-    'grokcore.component',
+    'grokcore.component >= 2.3',
     'setuptools',
+    'cromlech.browser',
     'cromlech.io',
     'dawnlight',
     ]

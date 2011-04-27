@@ -4,6 +4,6 @@
 
   <include package="zope.component" />
   <include package="grokcore.component" file="meta.zcml" />
-  <grok:grok package="." />
+  <grok:grok package=".publish" />
 
 </configure>
