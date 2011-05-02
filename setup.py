@@ -12,7 +12,7 @@ install_requires = [
     ]
 
 tests_require = [
-    'zope.pytest',
+    'pytest',
     ]
 
 setup(name='cromlech.dawnlight',
