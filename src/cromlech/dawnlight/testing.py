@@ -6,6 +6,9 @@ from zope.testing.cleanup import cleanUp
 
 
 def grok(module_name):
+    """
+    grok dependencies and module module_name for testing purpose
+    """
     config = ConfigurationMachine()
     zcml.do_grok('grokcore.component.meta', config)
     zcml.do_grok(module_name, config)

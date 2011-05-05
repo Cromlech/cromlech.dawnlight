@@ -153,3 +153,18 @@ def test_traverser_traversing():
     publisher = DawnlightPublisher(req, Application())
     with pytest.raises(AttributeError):
         publisher.publish(root)
+
+
+def test_script_name():
+    """test that request.script_name is taken into account"""
+    root = get_structure()
+    req = TestRequest(path="/foo/a", script_name="/foo")
+    publisher = DawnlightPublisher(req, Application())
+    assert publisher.publish(root) == root.a
+    req = TestRequest(path="/foo/a", script_name="/bar")
+    publisher = DawnlightPublisher(req, Application())
+    with pytest.raises(ResolveError):
+        publisher.publish(root)
+    req = TestRequest(path="/a", script_name="/foo")
+    publisher = DawnlightPublisher(req, Application())
+    assert publisher.publish(root) == root.a
