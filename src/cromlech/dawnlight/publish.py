@@ -92,6 +92,8 @@ def traverse(consumer, stack, obj, request):
 class AttributeConsumer(grok.Subscription):
     """Default path consumer for model lookup, traversing objects
     using their attributes
+
+    It does not traverse on reserved / private attributes
     """
     grok.implements(IConsumer)
     grok.context(Interface)
@@ -101,9 +103,10 @@ class AttributeConsumer(grok.Subscription):
 
     def _resolve(self, obj, ns, name, request):
         if ns == u'default':
-            attr = getattr(obj, name, _marker)
-            if attr is not _marker:
-                return attr
+            if not name.startswith('_'):
+                attr = getattr(obj, name, _marker)
+                if attr is not _marker:
+                    return attr
         return None
 
 

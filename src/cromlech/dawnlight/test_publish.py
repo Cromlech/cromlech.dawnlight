@@ -2,6 +2,7 @@
 """Tests meant to be discovered by py.test"""
 
 import testing
+from dawnlight import ResolveError
 from cromlech.io.interfaces import IPublisher, IRequest
 from cromlech.browser.interfaces import IHTTPRenderer, ITraverser
 from zope.interface import Interface
@@ -33,7 +34,10 @@ class Application(object):
 
 
 class Container(dict):
-    pass
+
+    _protected_attr = ''
+    __special_attr__ = ''
+    __private_attr = ''
 
 
 class Model(object):
@@ -61,7 +65,7 @@ class RawView(object):
 
 
 class SpamTraverser(object):
-    """seek for attribute _spam_<name>
+    """a traverser that seeks for attribute _spam_<name>
     """
 
     grok.implements(ITraverser)
@@ -78,6 +82,7 @@ def get_structure():
     """
     initialize a simple structure : a root with a model as attribute "a",
     a model contained as item b
+    root as an attribute _spam_foo to test SpamTraverser
     """
     root = Container()
     setattr(root, "a", Model())
@@ -87,6 +92,8 @@ def get_structure():
 
 
 def test_get_publisher():
+    """Publisher is an adapter on IRequest, IDawnlightApplication
+    """
     assert (queryMultiAdapter((TestRequest(), Application()),
                                 IPublisher)
             is not None)
@@ -98,6 +105,23 @@ def test_attribute_traversing():
     req = TestRequest(path="/a")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == root.a
+
+
+def test_private_attribute_not_traversing():
+    """test that traversing on private attributes does not works"""
+    root = get_structure()
+    req = TestRequest(path="/_protected_attr")
+    publisher = DawnlightPublisher(req, Application())
+    with pytest.raises(ResolveError):
+        publisher.publish(root)
+    req = TestRequest(path="/__private_attr")
+    publisher = DawnlightPublisher(req, Application())
+    with pytest.raises(ResolveError):
+        publisher.publish(root)
+    req = TestRequest(path="/__special_attr__")
+    publisher = DawnlightPublisher(req, Application())
+    with pytest.raises(ResolveError):
+        publisher.publish(root)
 
 
 def test_item_traversing():
