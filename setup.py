@@ -13,6 +13,7 @@ install_requires = [
 
 tests_require = [
     'pytest',
+    'cromlech.browser[test]',
     ]
 
 setup(name='cromlech.dawnlight',
