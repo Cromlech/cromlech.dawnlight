@@ -1,2 +1,2 @@
-recursive-include src/cromlech/ *.txt *.py *.zcml
+recursive-include src/cromlech *.txt *.py *.zcml
 recursive-include docs *.txt
