@@ -17,7 +17,7 @@ depending on the application.
 Traversing
 -------------
 
-Three consumers are defined by default, in order of use :
+Three consumers are defined by default, in order of use:
 
 - traversal on attribute name
 - traversal on containement (__getitem__)

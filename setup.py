@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import os
+from os.path import join
 from setuptools import setup, find_packages
 
 version = '0.1a2'
@@ -21,16 +21,16 @@ tests_require = [
 setup(
     name='cromlech.dawnlight',
     version=version,
-    description="",
-    long_description=open("README.txt").read() + "\n" +
-    open(os.path.join("docs", "HISTORY.txt")).read(),
+    description="Dawnlight publisher for Cromlech applications.",
+    long_description=(open("README.txt").read() + "\n" +
+                      open(join("docs", "HISTORY.txt")).read()),
     classifiers=[
         "Programming Language :: Python",
         ],
     keywords='Cromlech Publisher',
     author='The Dolmen team',
     author_email='dolmen@list.dolmen-project.org',
-    url='http://gitweb.dolmen-project.org/',
+    url='http://gitweb.dolmen-project.org',
     license='ZPL',
     packages=find_packages('src', exclude=['ez_setup']),
     package_dir={'': 'src'},
