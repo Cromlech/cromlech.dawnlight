@@ -1,32 +1,32 @@
 # -*- coding: utf-8 -*-
 """Tests meant to be discovered by py.test"""
 
-import testing
-from dawnlight import ResolveError
-from cromlech.io.interfaces import IPublisher, IRequest
-from cromlech.browser.interfaces import IHTTPRenderer, ITraverser
-from zope.interface import Interface
-import grokcore.component as grok
-from cromlech.io.testing import TestRequest
-from cromlech.dawnlight import IDawnlightApplication
-from zope.component import queryMultiAdapter, provideAdapter
-from cromlech.dawnlight.publish import DawnlightPublisher
 import pytest
-import dawnlight
+import grokcore.component as grok
+
+from cromlech.browser.interfaces import IHTTPRenderer, ITraverser
+from cromlech.dawnlight import IDawnlightApplication
+from cromlech.dawnlight.publish import DawnlightPublisher
+from cromlech.io.interfaces import IPublisher, IRequest
+from cromlech.io.testing import TestRequest
+from dawnlight import ResolveError
+from zope.component import queryMultiAdapter, provideAdapter
+from zope.interface import Interface
+from zope.testing.cleanup import cleanUp
 
 
 def setup_module(module):
-    """ grok the publish module
+    """Grok the publish module
     """
-    testing.grok("cromlech.dawnlight.publish")
+    grok.testing.grok("cromlech.dawnlight.publish")
     provideAdapter(RawView, (Interface, IRequest),
                    IHTTPRenderer, name=u'index')
 
 
 def teardown_module(module):
-    """ undo groking
+    """Undo groking
     """
-    testing.cleanUp()
+    cleanUp()
 
 
 class Application(object):

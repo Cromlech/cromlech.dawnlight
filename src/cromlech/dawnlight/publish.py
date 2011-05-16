@@ -3,8 +3,9 @@
 import dawnlight
 import grokcore.component as grok
 from cromlech.browser.interfaces import ITraverser, IHTTPRenderer
-from dawnlight.interfaces import IConsumer
+from cromlech.dawnlight import IDawnlightApplication
 from cromlech.io.interfaces import IPublisher, IRequest
+from dawnlight.interfaces import IConsumer
 from zope.component import queryMultiAdapter
 from zope.interface import Interface
 
