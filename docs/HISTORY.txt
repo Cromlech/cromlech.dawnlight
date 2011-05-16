@@ -1,7 +1,16 @@
 Changelog
 =========
 
-0.1dev (unreleased)
--------------------
+0.1a2 (2011-05-16)
+------------------
+
+- Made the lookups pluggable.
+
+- `DawnlightPublisher` is no longer a `MultiAdapter`. Now, it uses an adapter
+  factory.
+
+
+0.1a1 (2011-05-09)
+------------------
 
 - Initial release

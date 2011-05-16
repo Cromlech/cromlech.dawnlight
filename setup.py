@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 version = '0.1a2'
 
 install_requires = [
-    'grokcore.component >= 2.3',
+    'grokcore.component >= 2.4',
     'setuptools',
     'cromlech.browser',
     'cromlech.io',
