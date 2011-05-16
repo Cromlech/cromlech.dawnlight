@@ -3,7 +3,6 @@
 import dawnlight
 import grokcore.component as grok
 from cromlech.browser.interfaces import ITraverser, IHTTPRenderer
-from cromlech.dawnlight import publish
 from dawnlight.interfaces import IConsumer
 from cromlech.io.interfaces import IPublisher, IRequest
 from zope.component import queryMultiAdapter
