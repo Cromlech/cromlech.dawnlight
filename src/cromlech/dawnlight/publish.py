@@ -4,8 +4,8 @@ import dawnlight
 import grokcore.component as grok
 from cromlech.browser.interfaces import ITraverser, IHTTPRenderer
 from cromlech.dawnlight import IDawnlightApplication
-from dawnlight.interfaces import IConsumer
 from cromlech.io.interfaces import IPublisher, IRequest
+from dawnlight.interfaces import IConsumer
 from zope.component import queryMultiAdapter
 from zope.interface import Interface
 
@@ -46,21 +46,29 @@ class ViewLookup(dawnlight.ViewLookup):
         return queryMultiAdapter((obj, request), IHTTPRenderer, name=name)
 
 
-class DawnlightPublisher(grok.MultiAdapter):
+
+base_model_lookup = ModelLookup()
+base_view_lookup = ViewLookup()
+
+@grok.adapter(IRequest, IDawnlightApplication)
+@grok.implementer(IPublisher)
+def publisher(request, application):
+    return DawnlightPublisher(
+        request, application, base_model_lookup, base_view_lookup)
+
+
+class DawnlightPublisher(object):
     """The publisher using model and view lookup
 
     same role as Application in dawnlight
     """
 
-    grok.implements(IPublisher)
-    grok.adapts(IRequest, IDawnlightApplication)
-
-    model_lookup = ModelLookup()
-    view_lookup = ViewLookup()
-
-    def __init__(self, request, app):
+    def __init__(self, request, app,
+                 model_lookup=base_model_lookup, view_lookup=base_view_lookup):
         self.app = app
         self.request = request
+        self.model_lookup = model_lookup
+        self.view_lookup = view_lookup
 
     def _root_path(self, path):
         if path.startswith(self.request.script_name):
@@ -68,7 +76,8 @@ class DawnlightPublisher(grok.MultiAdapter):
         return path
 
     def publish(self, root, handle_errors=True):
-        """Traverse and call view"""
+        """Traverse and call view.
+        """
         path = self._root_path(self.request.path)
         model, unconsumed = self.model_lookup(path, root, self.request)
         view = self.view_lookup(self.request, model, unconsumed)
@@ -79,8 +88,9 @@ _marker = object()
 
 
 def traverse(consumer, stack, obj, request):
-    """Furnish the base consumer __call__ methode delegating
-    resolution to the _resolve method"""
+    """Furnish the base consumer __call__ method delegating
+    the resolution to the _resolve method.
+    """
     ns, name = stack.pop()
     next_obj = consumer._resolve(obj, ns, name, request)
     if next_obj is None:
@@ -112,7 +122,7 @@ class AttributeConsumer(grok.Subscription):
 
 class ItemConsumer(grok.Subscription):
     """Default path consumer for model lookup, traversing objects
-    using their attributes or, as second choice, contained items
+    using their attributes or, as second choice, contained items.
     """
     grok.implements(IConsumer)
     grok.context(Interface)
@@ -132,7 +142,7 @@ class ItemConsumer(grok.Subscription):
 
 class TraverserConsumer(grok.Subscription):
     """Consumer for model lookup, using traversing by adaptation
-    to ITraverser
+    to ITraverser.
     """
     grok.implements(IConsumer)
     grok.context(Interface)
