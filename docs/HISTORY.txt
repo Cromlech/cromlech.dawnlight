@@ -1,7 +1,12 @@
 Changelog
 =========
 
-0.1dev (unreleased)
+0.1a2
+------
+
+Using dawlight >= 0.12b1 that remove bug with ending slash in path
+
+0.1a1
 -------------------
 
-- Initial release
+Initial release

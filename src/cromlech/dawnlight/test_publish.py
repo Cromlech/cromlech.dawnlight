@@ -132,6 +132,16 @@ def test_item_traversing():
     assert publisher.publish(root) == root['b']
 
 
+def test_end_with_slash():
+    root = get_structure()
+    req = TestRequest(path="/b/")
+    publisher = DawnlightPublisher(req, Application())
+    assert publisher.publish(root) == root['b']
+    req = TestRequest(path="/b///")
+    publisher = DawnlightPublisher(req, Application())
+    assert publisher.publish(root) == root['b']
+
+
 def test_attribute_masquerade_item():
     """test that attributes takes precedence over sub item"""
     root = get_structure()
@@ -168,3 +178,4 @@ def test_script_name():
     req = TestRequest(path="/a", script_name="/foo")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == root.a
+

@@ -1,14 +1,14 @@
 from setuptools import setup, find_packages
 import os
 
-version = '0.1a1'
+version = '0.1a2'
 
 install_requires = [
     'grokcore.component >= 2.3',
     'setuptools',
     'cromlech.browser',
     'cromlech.io',
-    'dawnlight',
+    'dawnlight >= 0.12b1',
     ]
 
 tests_require = [
