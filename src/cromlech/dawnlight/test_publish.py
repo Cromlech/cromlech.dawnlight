@@ -179,4 +179,3 @@ def test_script_name():
     req = TestRequest(path="/a", script_name="/foo")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == root.a
-
