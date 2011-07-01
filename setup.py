@@ -6,15 +6,18 @@ from setuptools import setup, find_packages
 version = '0.2a1'
 
 install_requires = [
-    'grokcore.component >= 2.4',
-    'setuptools',
     'cromlech.browser',
     'cromlech.io',
     'dawnlight >= 0.13b2',
+    'grokcore.component >= 2.4',
+    'setuptools',
+    'zope.component',
+    'zope.interface',
     ]
 
 tests_require = [
     'pytest',
+    'zope.testing',
     'cromlech.browser [test]',
     ]
 
