@@ -18,7 +18,7 @@ from zope.testing.cleanup import cleanUp
 def setup_module(module):
     """Grok the publish module
     """
-    grok.testing.grok("cromlech.dawnlight.publish")
+    grok.testing.grok("cromlech.dawnlight")
     provideAdapter(RawView, (Interface, IRequest),
                    IHTTPRenderer, name=u'index')
 
@@ -171,6 +171,7 @@ def test_script_name():
     req = TestRequest(path="/foo/a", script_name="/foo")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == root.a
+
     req = TestRequest(path="/foo/a", script_name="/bar")
     publisher = DawnlightPublisher(req, Application())
     with pytest.raises(ResolveError):

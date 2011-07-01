@@ -3,14 +3,14 @@
 from os.path import join
 from setuptools import setup, find_packages
 
-version = '0.1a3'
+version = '0.2a1'
 
 install_requires = [
     'grokcore.component >= 2.4',
     'setuptools',
     'cromlech.browser',
     'cromlech.io',
-    'dawnlight >= 0.12b1',
+    'dawnlight >= 0.13b2',
     ]
 
 tests_require = [
@@ -22,7 +22,7 @@ setup(
     name='cromlech.dawnlight',
     version=version,
     description="Dawnlight publisher for Cromlech applications.",
-    long_description=(open("README.txt").read() + "\n" +
+    long_description=(open("README.txt").read() + "\n\n" +
                       open(join("docs", "HISTORY.txt")).read()),
     classifiers=[
         "Programming Language :: Python",
