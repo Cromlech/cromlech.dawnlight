@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.2a2 (2011-07-04)
+------------------
+
+- Added a separated ZCML files to "grok" `the IConsumer` components.
+
+
 0.2a1 (2011-07-02)
 ------------------
 

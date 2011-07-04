@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import dawnlight
-import grokcore.component as grok
+from grokcore.component import querySubscriptions
 from cromlech.browser.interfaces import IHTTPRenderer
 from dawnlight.interfaces import IConsumer
 from zope.component import queryMultiAdapter
@@ -25,7 +25,7 @@ class ModelLookup(dawnlight.ModelLookup):
         """We use IConsumer registered in the global registry as
         subscription adapters.
         """
-        return grok.querySubscriptions(obj, IConsumer)
+        return querySubscriptions(obj, IConsumer)
 
 
 class ViewLookup(dawnlight.ViewLookup):
