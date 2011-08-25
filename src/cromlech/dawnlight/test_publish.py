@@ -6,7 +6,7 @@ import grokcore.component as grok
 
 from cromlech.browser.interfaces import IHTTPRenderer, ITraverser
 from cromlech.dawnlight import IDawnlightApplication
-from cromlech.dawnlight.publish import DawnlightPublisher
+from cromlech.dawnlight.publish import DawnlightPublisher, PublicationError
 from cromlech.io.interfaces import IPublisher, IRequest
 from cromlech.io.testing import TestRequest
 from dawnlight import ResolveError
@@ -110,23 +110,30 @@ def test_attribute_traversing():
 def test_private_attribute_not_traversing():
     """test that traversing on private attributes does not works"""
     root = get_structure()
+
     req = TestRequest(path="/_protected_attr")
     publisher = DawnlightPublisher(req, Application())
-    with pytest.raises(ResolveError):
+    with pytest.raises(PublicationError) as e:
         publisher.publish(root)
+    assert isinstance(e.value.origin, ResolveError)
+        
     req = TestRequest(path="/__private_attr")
     publisher = DawnlightPublisher(req, Application())
-    with pytest.raises(ResolveError):
+    with pytest.raises(PublicationError) as e:
         publisher.publish(root)
+    assert isinstance(e.value.origin, ResolveError)
+
     req = TestRequest(path="/__special_attr__")
     publisher = DawnlightPublisher(req, Application())
-    with pytest.raises(ResolveError):
+    with pytest.raises(PublicationError) as e:
         publisher.publish(root)
+    assert isinstance(e.value.origin, ResolveError)
 
 
 def test_item_traversing():
     """test that sub item traversing works"""
     root = get_structure()
+
     req = TestRequest(path="/b")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == root['b']
@@ -134,9 +141,11 @@ def test_item_traversing():
 
 def test_end_with_slash():
     root = get_structure()
+
     req = TestRequest(path="/b/")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == root['b']
+
     req = TestRequest(path="/b///")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == root['b']
@@ -152,17 +161,21 @@ def test_attribute_masquerade_item():
 
 
 def test_traverser_traversing():
-    # register traverser for namespace spam
-    provideAdapter(SpamTraverser, (Container, IRequest), ITraverser,
-                    name=u'spam')
     root = get_structure()
+
+    # register traverser for namespace spam
+    provideAdapter(
+        SpamTraverser, (Container, IRequest), ITraverser, name=u'spam')
+
     req = TestRequest(path="/++spam++foo")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == root._spam_foo
+
     req = TestRequest(path="/++spam++bar")
     publisher = DawnlightPublisher(req, Application())
-    with pytest.raises(AttributeError):
+    with pytest.raises(PublicationError) as e:
         publisher.publish(root)
+    assert isinstance(e.value.origin, AttributeError)
 
 
 def test_script_name():
@@ -174,7 +187,7 @@ def test_script_name():
 
     req = TestRequest(path="/foo/a", script_name="/bar")
     publisher = DawnlightPublisher(req, Application())
-    with pytest.raises(ResolveError):
+    with pytest.raises(PublicationError):
         publisher.publish(root)
     req = TestRequest(path="/a", script_name="/foo")
     publisher = DawnlightPublisher(req, Application())
