@@ -7,6 +7,7 @@ from cromlech.dawnlight import IDawnlightApplication, ModelLookup, ViewLookup
 from cromlech.io.interfaces import IPublisher, IRequest, IResponse
 from zope.component import queryMultiAdapter
 from zope.interface import Interface
+from zope.component import getSiteManager
 
 shortcuts = {
     '@@': dawnlight.VIEW,
@@ -40,18 +41,13 @@ class DawnlightPublisher(object):
         path = self.base_path(self.request.path)
         stack = dawnlight.parse_path(path, shortcuts)
 
-        result, crumbs = self.model_lookup(self.request, root, stack)
-        if not IResponse.providedBy(result):
-            if crumbs:
-                result = self.view_lookup(self.request, result, crumbs)
-            else:
-                previous = result
-                result = queryMultiAdapter(
-                    (self, self.request, result), IHTTPRenderer)
-                if result is None:
-                    raise PublicationUncomplete(
-                            'Non HTTP Renderer for %r' % previous)
-            result = IResponse(result)
+        model, crumbs = self.model_lookup(self.request, root, stack)
+        if not IResponse.providedBy(model):
+            view = self.view_lookup(self.request, model, crumbs)
+            if view is None:
+                raise PublicationUncomplete(
+                    'No rendering components for %r' % model)
+            return IResponse(view)
         return result
 
 
@@ -66,9 +62,3 @@ def dawnlight_publisher(request, application):
 @grok.implementer(IResponse)
 def publish_http_renderer(renderer):
     return renderer()
-
-
-@grok.adapter(DawnlightPublisher, IRequest, Interface)
-@grok.implementer(IHTTPRenderer)
-def default_http_renderer(publisher, request, obj):
-    return publisher.view_lookup(request, obj, [])

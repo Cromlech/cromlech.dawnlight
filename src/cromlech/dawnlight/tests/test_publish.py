@@ -8,7 +8,7 @@ from cromlech.browser.interfaces import IHTTPRenderer, ITraverser
 from cromlech.dawnlight import IDawnlightApplication
 from cromlech.dawnlight.publish import (DawnlightPublisher,
                                        PublicationUncomplete)
-from cromlech.io.interfaces import IPublisher, IRequest
+from cromlech.io.interfaces import IPublisher, IRequest, IResponse
 from cromlech.io.testing import TestRequest
 from dawnlight import ResolveError
 from zope.component import (queryMultiAdapter, provideAdapter,
@@ -218,30 +218,53 @@ def test_uncomplete_publication():
     with pytest.raises(PublicationUncomplete):
         publisher.publish(root)
 
-    # a specific publisher
-    def no_publish(request, result, crumbs):
-        return None
 
-    class MyPublisher(DawnlightPublisher):
-        pass
-    provideAdapter(no_publish, (MyPublisher, IRequest, Interface),
-                   IHTTPRenderer)
-
-    req = TestRequest(path="/a")
-    publisher = MyPublisher(req, Application())
-    with pytest.raises(PublicationUncomplete):
-        publisher.publish(root)
+class FaultyInit(RawView):
+    
+    def __init__(self, context, request):
+        raise NotImplementedError('init failed')
 
 
-def test_lookuperror(monkeypatch):
-    """in version < 0.2a3 we where hidding ComponentLookupError"""
-    def failed_call(self):
-        raise ComponentLookupError('failed on purpose')
-    monkeypatch.setattr(RawView, '__call__', failed_call)
+class FaultyCaller(RawView):
+    
+    def __call__(self):
+        raise NotImplementedError('call failed')
 
+
+@grok.adapter(RawView)
+@grok.implementer(IResponse)
+def faulty_renderer_adapter(renderer):
+    raise ComponentLookupError('failed on purpose')
+
+
+def test_faulty_resolution():
     root = get_structure()
+
+    # Fail on the renderer init
+    provideAdapter(FaultyInit, (IModel, IRequest),
+                   IHTTPRenderer, name=u'faulty_init')
+    
+    req = TestRequest(path="/a/faulty_init")
+    publisher = DawnlightPublisher(req, Application())
+    with pytest.raises(NotImplementedError) as e:
+        publisher.publish(root)
+        assert e.value == 'init failed'
+
+    # Fail in the renderer call
+    provideAdapter(FaultyCaller, (IModel, IRequest),
+                   IHTTPRenderer, name=u'faulty_caller')
+
+    req = TestRequest(path="/a/faulty_caller")
+    publisher = DawnlightPublisher(req, Application())
+    with pytest.raises(NotImplementedError) as e:
+        publisher.publish(root)
+        assert e.value == 'call failed'
+
+    # Fail in the IResponse adapter
+    provideAdapter(faulty_renderer_adapter)
+
     req = TestRequest(path="/a")
     publisher = DawnlightPublisher(req, Application())
     with pytest.raises(ComponentLookupError) as e:
         publisher.publish(root)
-        assert str(e.value) == 'failed on purpose'
+        assert e.value == 'failed on purpose'
