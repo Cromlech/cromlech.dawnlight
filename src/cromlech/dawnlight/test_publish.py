@@ -192,3 +192,14 @@ def test_script_name():
     req = TestRequest(path="/a", script_name="/foo")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == root.a
+
+
+def test_uncomplete():
+    """test for raising PublicationUncomplete"""
+    root = get_structure()
+    root['c'] = object()  # no available view
+    req = TestRequest(path="/a/c")
+    publisher = DawnlightPublisher(req, Application())
+    with pytest.raises(PublicationError):
+        publisher.publish(root)
+    

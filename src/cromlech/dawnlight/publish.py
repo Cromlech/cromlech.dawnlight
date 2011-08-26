@@ -57,7 +57,11 @@ class DawnlightPublisher(object):
                     result = queryMultiAdapter(
                         (self, self.request, result), IHTTPRenderer)
                     if result is None:
-                        raise PublicationUncomplete
+                        raise PublicationUncomplete(
+                                'Still have %s to consume, ' +
+                                'while %r is not a response and does' +
+                                'not have a renderer.' %
+                                (crumbs, result))
                 return IResponse(result)
             return result
         except Exception as origin:
