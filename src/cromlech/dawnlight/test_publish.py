@@ -6,12 +6,15 @@ import grokcore.component as grok
 
 from cromlech.browser.interfaces import IHTTPRenderer, ITraverser
 from cromlech.dawnlight import IDawnlightApplication
-from cromlech.dawnlight.publish import DawnlightPublisher, PublicationError
+from cromlech.dawnlight.publish import (DawnlightPublisher, PublicationError,
+                                       PublicationUncomplete,
+                                       default_http_renderer)
 from cromlech.io.interfaces import IPublisher, IRequest
 from cromlech.io.testing import TestRequest
 from dawnlight import ResolveError
-from zope.component import queryMultiAdapter, provideAdapter
-from zope.interface import Interface
+from zope.component import (queryMultiAdapter, provideAdapter,
+                            getGlobalSiteManager)
+from zope.interface import Interface, implements
 from zope.testing.cleanup import cleanUp
 
 
@@ -19,7 +22,7 @@ def setup_module(module):
     """Grok the publish module
     """
     grok.testing.grok("cromlech.dawnlight")
-    provideAdapter(RawView, (Interface, IRequest),
+    provideAdapter(RawView, (IModel, IRequest),
                    IHTTPRenderer, name=u'index')
 
 
@@ -40,8 +43,12 @@ class Container(dict):
     __private_attr = ''
 
 
-class Model(object):
+class IModel(Interface):
     pass
+
+
+class Model(object):
+    implements(IModel)
 
 
 class RawView(object):
@@ -113,21 +120,18 @@ def test_private_attribute_not_traversing():
 
     req = TestRequest(path="/_protected_attr")
     publisher = DawnlightPublisher(req, Application())
-    with pytest.raises(PublicationError) as e:
+    with pytest.raises(ResolveError) as e:
         publisher.publish(root)
-    assert isinstance(e.value.origin, ResolveError)
         
     req = TestRequest(path="/__private_attr")
     publisher = DawnlightPublisher(req, Application())
-    with pytest.raises(PublicationError) as e:
+    with pytest.raises(ResolveError) as e:
         publisher.publish(root)
-    assert isinstance(e.value.origin, ResolveError)
 
     req = TestRequest(path="/__special_attr__")
     publisher = DawnlightPublisher(req, Application())
-    with pytest.raises(PublicationError) as e:
+    with pytest.raises(ResolveError) as e:
         publisher.publish(root)
-    assert isinstance(e.value.origin, ResolveError)
 
 
 def test_item_traversing():
@@ -173,9 +177,8 @@ def test_traverser_traversing():
 
     req = TestRequest(path="/++spam++bar")
     publisher = DawnlightPublisher(req, Application())
-    with pytest.raises(PublicationError) as e:
+    with pytest.raises(AttributeError) as e:
         publisher.publish(root)
-    assert isinstance(e.value.origin, AttributeError)
 
 
 def test_script_name():
@@ -187,19 +190,43 @@ def test_script_name():
 
     req = TestRequest(path="/foo/a", script_name="/bar")
     publisher = DawnlightPublisher(req, Application())
-    with pytest.raises(PublicationError):
+    with pytest.raises(ResolveError):
         publisher.publish(root)
     req = TestRequest(path="/a", script_name="/foo")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == root.a
 
 
-def test_uncomplete():
+def test_no_view():
     """test for raising PublicationUncomplete"""
     root = get_structure()
-    root['c'] = object()  # no available view
-    req = TestRequest(path="/a/c")
+    req = TestRequest(path="/b/@@unknown")
     publisher = DawnlightPublisher(req, Application())
-    with pytest.raises(PublicationError):
+    with pytest.raises(ResolveError):
         publisher.publish(root)
-    
+
+
+def test_uncomplete_publication():
+    """test for raising PublicationUncomplete"""
+    root = get_structure()
+    # no more default publisher
+    def no_lookup(request, result, crumbs):
+        return None
+    req = TestRequest(path="/a")
+    publisher = DawnlightPublisher(req, Application(), view_lookup=no_lookup)
+    with pytest.raises(PublicationUncomplete):
+        publisher.publish(root)
+
+    # a specific publisher
+    def no_publish(request, result, crumbs):
+        return None
+
+    class MyPublisher(DawnlightPublisher):
+        pass
+
+    provideAdapter(no_publish, (MyPublisher, IRequest, Interface),
+                   IHTTPRenderer)
+    req = TestRequest(path="/a")
+    publisher = MyPublisher(req, Application())
+    with pytest.raises(PublicationUncomplete):
+        publisher.publish(root)

@@ -5,7 +5,7 @@ import grokcore.component as grok
 from cromlech.browser.interfaces import IHTTPRenderer
 from cromlech.dawnlight import IDawnlightApplication, ModelLookup, ViewLookup
 from cromlech.io.interfaces import IPublisher, IRequest, IResponse
-from zope.component import queryMultiAdapter
+from zope.component import queryMultiAdapter, ComponentLookupError
 from zope.interface import Interface, implements
 
 shortcuts = {
@@ -48,24 +48,24 @@ class DawnlightPublisher(object):
         path = self.base_path(self.request.path)
         stack = dawnlight.parse_path(path, shortcuts)
 
-        try:
-            result, crumbs = self.model_lookup(self.request, root, stack)
-            if not IResponse.providedBy(result):
-                if crumbs:
-                    result = self.view_lookup(self.request, result, crumbs)
-                else:
-                    result = queryMultiAdapter(
-                        (self, self.request, result), IHTTPRenderer)
-                    if result is None:
-                        raise PublicationUncomplete(
-                                'Still have %s to consume, ' +
-                                'while %r is not a response and does' +
-                                'not have a renderer.' %
-                                (crumbs, result))
-                return IResponse(result)
-            return result
-        except Exception as origin:
-            raise PublicationError(origin)
+        result, crumbs = self.model_lookup(self.request, root, stack)
+        if not IResponse.providedBy(result):
+            if crumbs:
+                result = self.view_lookup(self.request, result, crumbs)
+            else:
+                previous = result
+                result = queryMultiAdapter(
+                    (self, self.request, result), IHTTPRenderer)
+                if result is None:
+                    raise PublicationUncomplete(
+                            'Non HTTP Renderer for %r' % previous)
+            try:
+                result = IResponse(result)
+            except ComponentLookupError as origin:
+                # ComponentLookupError may comes from the IRespose Adaptation
+                # as well as from an unrelated lookup error in code
+                raise PublicationError(origin)
+        return result
 
 
 @grok.adapter(IRequest, IDawnlightApplication)
