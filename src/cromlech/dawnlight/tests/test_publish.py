@@ -4,17 +4,16 @@
 import pytest
 import grokcore.component as grok
 
-from cromlech.browser.interfaces import IHTTPRenderer, ITraverser
-from cromlech.dawnlight import IDawnlightApplication
-from cromlech.dawnlight.publish import (DawnlightPublisher,
-                                       PublicationUncomplete)
-from cromlech.io.interfaces import IPublisher, IRequest, IResponse
 from cromlech.io.testing import TestRequest
-from dawnlight import ResolveError
-from zope.component import (queryMultiAdapter, provideAdapter,
-                            ComponentLookupError)
+from cromlech.io.interfaces import IPublisher, IRequest, IResponse
+from cromlech.browser.interfaces import IHTTPRenderer, ITraverser
+from cromlech.dawnlight import (
+    ResolveError, IDawnlightApplication, DawnlightPublisher, PublicationError)
+
 from zope.interface import Interface, implements
 from zope.testing.cleanup import cleanUp
+from zope.component import (
+    queryMultiAdapter, provideAdapter, ComponentLookupError)
 
 
 def setup_module(module):
@@ -100,9 +99,8 @@ def get_structure():
 def test_get_publisher():
     """Publisher is an adapter on IRequest, IDawnlightApplication
     """
-    assert (queryMultiAdapter((TestRequest(), Application()),
-                                IPublisher)
-            is not None)
+    assert queryMultiAdapter(
+        (TestRequest(), Application()), IPublisher) is not None
 
 
 def test_attribute_traversing():
@@ -197,7 +195,8 @@ def test_script_name():
 
 
 def test_no_view():
-    """test for raising PublicationUncomplete"""
+    """test for raising ResolveError.
+    """
     root = get_structure()
     req = TestRequest(path="/b/@@unknown")
     publisher = DawnlightPublisher(req, Application())
@@ -206,7 +205,8 @@ def test_no_view():
 
 
 def test_uncomplete_publication():
-    """test for raising PublicationUncomplete"""
+    """test for raising PublicationError.
+    """
     root = get_structure()
 
     # no more default publisher
@@ -215,7 +215,7 @@ def test_uncomplete_publication():
 
     req = TestRequest(path="/a")
     publisher = DawnlightPublisher(req, Application(), view_lookup=no_lookup)
-    with pytest.raises(PublicationUncomplete):
+    with pytest.raises(PublicationError):
         publisher.publish(root)
 
 

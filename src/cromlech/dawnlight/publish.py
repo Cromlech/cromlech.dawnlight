@@ -17,7 +17,7 @@ base_model_lookup = ModelLookup()
 base_view_lookup = ViewLookup()
 
 
-class PublicationUncomplete(Exception):
+class PublicationError(Exception):
     pass
 
 
@@ -42,13 +42,15 @@ class DawnlightPublisher(object):
         stack = dawnlight.parse_path(path, shortcuts)
 
         model, crumbs = self.model_lookup(self.request, root, stack)
-        if not IResponse.providedBy(model):
-            view = self.view_lookup(self.request, model, crumbs)
-            if view is None:
-                raise PublicationUncomplete(
-                    'No rendering components for %r' % model)
-            return IResponse(view)
-        return result
+        if IResponse.providedBy(model):
+            # The found object can be returned safely.
+            return model
+
+        # The model needs an renderer
+        view = self.view_lookup(self.request, model, crumbs)
+        if view is None:
+            raise PublicationError('%r can not be rendered.' % model)
+        return IResponse(view)
 
 
 @grok.adapter(IRequest, IDawnlightApplication)
