@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.2b1 (2011-08-27)
+------------------
+
+- Fixed and refined the publish method of the publisher.
+
 0.2a4 (2011-08-25)
 ------------------
 
