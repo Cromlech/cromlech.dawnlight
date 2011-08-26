@@ -6,14 +6,13 @@ import grokcore.component as grok
 
 from cromlech.browser.interfaces import IHTTPRenderer, ITraverser
 from cromlech.dawnlight import IDawnlightApplication
-from cromlech.dawnlight.publish import (DawnlightPublisher, PublicationError,
-                                       PublicationUncomplete,
-                                       default_http_renderer)
+from cromlech.dawnlight.publish import (DawnlightPublisher,
+                                       PublicationUncomplete)
 from cromlech.io.interfaces import IPublisher, IRequest
 from cromlech.io.testing import TestRequest
 from dawnlight import ResolveError
 from zope.component import (queryMultiAdapter, provideAdapter,
-                            getGlobalSiteManager)
+                            ComponentLookupError)
 from zope.interface import Interface, implements
 from zope.testing.cleanup import cleanUp
 
@@ -120,17 +119,17 @@ def test_private_attribute_not_traversing():
 
     req = TestRequest(path="/_protected_attr")
     publisher = DawnlightPublisher(req, Application())
-    with pytest.raises(ResolveError) as e:
+    with pytest.raises(ResolveError):
         publisher.publish(root)
-        
+
     req = TestRequest(path="/__private_attr")
     publisher = DawnlightPublisher(req, Application())
-    with pytest.raises(ResolveError) as e:
+    with pytest.raises(ResolveError):
         publisher.publish(root)
 
     req = TestRequest(path="/__special_attr__")
     publisher = DawnlightPublisher(req, Application())
-    with pytest.raises(ResolveError) as e:
+    with pytest.raises(ResolveError):
         publisher.publish(root)
 
 
@@ -177,7 +176,7 @@ def test_traverser_traversing():
 
     req = TestRequest(path="/++spam++bar")
     publisher = DawnlightPublisher(req, Application())
-    with pytest.raises(AttributeError) as e:
+    with pytest.raises(AttributeError):
         publisher.publish(root)
 
 
@@ -209,9 +208,11 @@ def test_no_view():
 def test_uncomplete_publication():
     """test for raising PublicationUncomplete"""
     root = get_structure()
+
     # no more default publisher
     def no_lookup(request, result, crumbs):
         return None
+
     req = TestRequest(path="/a")
     publisher = DawnlightPublisher(req, Application(), view_lookup=no_lookup)
     with pytest.raises(PublicationUncomplete):
@@ -223,10 +224,24 @@ def test_uncomplete_publication():
 
     class MyPublisher(DawnlightPublisher):
         pass
-
     provideAdapter(no_publish, (MyPublisher, IRequest, Interface),
                    IHTTPRenderer)
+
     req = TestRequest(path="/a")
     publisher = MyPublisher(req, Application())
     with pytest.raises(PublicationUncomplete):
         publisher.publish(root)
+
+
+def test_lookuperror(monkeypatch):
+    """in version < 0.2a3 we where hidding ComponentLookupError"""
+    def failed_call(self):
+        raise ComponentLookupError('failed on purpose')
+    monkeypatch.setattr(RawView, '__call__', failed_call)
+
+    root = get_structure()
+    req = TestRequest(path="/a")
+    publisher = DawnlightPublisher(req, Application())
+    with pytest.raises(ComponentLookupError) as e:
+        publisher.publish(root)
+        assert str(e.value) == 'failed on purpose'

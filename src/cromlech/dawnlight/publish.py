@@ -5,8 +5,8 @@ import grokcore.component as grok
 from cromlech.browser.interfaces import IHTTPRenderer
 from cromlech.dawnlight import IDawnlightApplication, ModelLookup, ViewLookup
 from cromlech.io.interfaces import IPublisher, IRequest, IResponse
-from zope.component import queryMultiAdapter, ComponentLookupError
-from zope.interface import Interface, implements
+from zope.component import queryMultiAdapter
+from zope.interface import Interface
 
 shortcuts = {
     '@@': dawnlight.VIEW,
@@ -18,14 +18,6 @@ base_view_lookup = ViewLookup()
 
 class PublicationUncomplete(Exception):
     pass
-
-
-class PublicationError(RuntimeError):
-    """An exception wrapper.
-    """
-    def __init__(self, origin):
-        Exception.__init__(self, origin.message)
-        self.origin = origin
 
 
 class DawnlightPublisher(object):
@@ -59,12 +51,7 @@ class DawnlightPublisher(object):
                 if result is None:
                     raise PublicationUncomplete(
                             'Non HTTP Renderer for %r' % previous)
-            try:
-                result = IResponse(result)
-            except ComponentLookupError as origin:
-                # ComponentLookupError may comes from the IRespose Adaptation
-                # as well as from an unrelated lookup error in code
-                raise PublicationError(origin)
+            result = IResponse(result)
         return result
 
 

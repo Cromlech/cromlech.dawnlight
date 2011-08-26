@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.2a3 (2011-08-25)
+------------------
+
+- refactored publication process
+- ComponentLookupError in views are not hidden anymore
+
 0.2a2 (2011-07-04)
 ------------------
 
