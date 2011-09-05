@@ -6,8 +6,8 @@ from cromlech.browser.interfaces import IHTTPRenderer
 from cromlech.dawnlight import IDawnlightApplication, ModelLookup, ViewLookup
 from cromlech.io.interfaces import IPublisher, IRequest, IResponse
 from zope.component import queryMultiAdapter
-from zope.interface import Interface
-from zope.component import getSiteManager
+from zope.component.interfaces import ComponentLookupError
+from zope.location import LocationProxy, locate
 
 shortcuts = {
     '@@': dawnlight.VIEW,
@@ -19,6 +19,21 @@ base_view_lookup = ViewLookup()
 
 class PublicationError(Exception):
     pass
+
+
+class PublicationErrorBubble(PublicationError):
+    """Bubbling up error.
+    """
+    def __init__(self, wrapped):
+        self.wrapped = wrapped
+        PublicationError.__init__(
+            self, 'Publication error: %s' % str(wrapped))
+
+    def __str__(self):
+        return str(self.wrapped)
+
+    def __repr__(self):
+        return repr(self.wrapped)
 
 
 class DawnlightPublisher(object):
@@ -63,4 +78,24 @@ def dawnlight_publisher(request, application):
 @grok.adapter(IHTTPRenderer)
 @grok.implementer(IResponse)
 def publish_http_renderer(renderer):
-    return renderer()
+    try:
+        return renderer()
+    except ComponentLookupError as e:
+        error = LocationProxy(e)
+        locate(error, renderer.context, 'error')
+        raise PublicationErrorBubble(error)
+    except Exception as e:
+        error = LocationProxy(e)
+        locate(error, renderer.context, 'error')
+        result = queryMultiAdapter((error, renderer.request), IHTTPRenderer)
+        if result is not None:
+            try:
+                return result()
+            except Exception as e2:
+                # We failed to fail.
+                # Let's return something sensible.
+                raise PublicationError(
+                    'A publication error (%r) happened, while trying to '
+                    'render the error (%r)' % (e2, e))
+        else:
+            raise

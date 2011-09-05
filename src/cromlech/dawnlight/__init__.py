@@ -9,6 +9,7 @@ class IDawnlightApplication(Interface):
 
 from dawnlight import ResolveError  # exposing for convenience.
 from cromlech.dawnlight.lookup import ModelLookup, ViewLookup
-from cromlech.dawnlight.publish import DawnlightPublisher, PublicationError
+from cromlech.dawnlight.publish import (
+    DawnlightPublisher, PublicationError, PublicationErrorBubble)
 from cromlech.dawnlight.consume import (
     AttributeConsumer, ItemConsumer, TraverserConsumer)

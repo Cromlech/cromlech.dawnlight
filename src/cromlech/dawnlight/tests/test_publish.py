@@ -5,10 +5,11 @@ import pytest
 import grokcore.component as grok
 
 from cromlech.io.testing import TestRequest
-from cromlech.io.interfaces import IPublisher, IRequest, IResponse
+from cromlech.io.interfaces import IPublisher, IRequest
 from cromlech.browser.interfaces import IHTTPRenderer, ITraverser
 from cromlech.dawnlight import (
-    ResolveError, IDawnlightApplication, DawnlightPublisher, PublicationError)
+    ResolveError, IDawnlightApplication, DawnlightPublisher,
+    PublicationError, PublicationErrorBubble)
 
 from zope.interface import Interface, implements
 from zope.testing.cleanup import cleanUp
@@ -231,10 +232,16 @@ class FaultyCaller(RawView):
         raise NotImplementedError('call failed')
 
 
-@grok.adapter(RawView)
-@grok.implementer(IResponse)
-def faulty_renderer_adapter(renderer):
-    raise ComponentLookupError('failed on purpose')
+class LookupFailure(RawView):
+    
+    def __call__(self):
+        raise ComponentLookupError('This is bad.')
+
+
+class NotImplementedView(RawView):
+    
+    def __call__(self):
+        return u"Not implemented: %s" % self.context
 
 
 def test_faulty_resolution():
@@ -260,11 +267,23 @@ def test_faulty_resolution():
         publisher.publish(root)
         assert e.value == 'call failed'
 
-    # Fail in the IResponse adapter
-    provideAdapter(faulty_renderer_adapter)
+    # We can render errors
+    provideAdapter(
+        NotImplementedView, (NotImplementedError, IRequest), IHTTPRenderer)
 
-    req = TestRequest(path="/a")
+    req = TestRequest(path="/a/faulty_caller")
     publisher = DawnlightPublisher(req, Application())
-    with pytest.raises(ComponentLookupError) as e:
+    assert publisher.publish(root) == u'Not implemented: call failed'
+
+
+    # Simulation of a component lookup error
+    provideAdapter(LookupFailure, (IModel, IRequest),
+                   IHTTPRenderer, name=u'fail_lookup')
+
+    req = TestRequest(path="/a/fail_lookup")
+    publisher = DawnlightPublisher(req, Application())
+    with pytest.raises(PublicationErrorBubble) as e:
         publisher.publish(root)
-        assert e.value == 'failed on purpose'
+
+    assert e.value.__class__ == PublicationErrorBubble
+    assert e.value.wrapped.__class__ == ComponentLookupError

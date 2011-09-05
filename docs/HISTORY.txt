@@ -1,10 +1,19 @@
 Changelog
 =========
 
+0.3a1 (2011-09-03)
+------------------
+
+- Enhanced the IHTTPRenderer to IResult adapter to provide a comprehensive
+  error handling. We can now bubble error in case of ComponentLookupErrors
+  and we can provide renderers for other errors.
+
+
 0.2b1 (2011-08-27)
 ------------------
 
 - Fixed and refined the publish method of the publisher.
+
 
 0.2a4 (2011-08-25)
 ------------------
@@ -12,11 +21,13 @@ Changelog
 - Cleaned up the IHTTPRenderer resolution to an IResult.
 - Added tests for all kind of errors during the publication.
 
+
 0.2a3 (2011-08-25)
 ------------------
 
 - refactored publication process
 - ComponentLookupError in views are not hidden anymore
+
 
 0.2a2 (2011-07-04)
 ------------------
@@ -28,7 +39,6 @@ Changelog
 ------------------
 
 - Using now dawnlight >= 0.13b2. The code has been modified accordingly.
-
 - Splitted the code into logical modules.
 
 
@@ -42,7 +52,6 @@ Using dawlight >= 0.12b1 that remove bug with ending slash in path
 ------------------
 
 - Made the lookups pluggable.
-
 - `DawnlightPublisher` is no longer a `MultiAdapter`. Now, it uses an adapter
   factory.
 
