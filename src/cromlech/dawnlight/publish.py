@@ -8,6 +8,8 @@ from cromlech.io.interfaces import IPublisher, IRequest, IResponse
 from zope.component import queryMultiAdapter
 from zope.component.interfaces import ComponentLookupError
 from zope.location import LocationProxy, locate
+from zope.proxy import removeAllProxies
+
 
 shortcuts = {
     '@@': dawnlight.VIEW,
@@ -82,12 +84,14 @@ def publish_http_renderer(renderer):
         return renderer()
     except ComponentLookupError as e:
         error = LocationProxy(e)
-        locate(error, renderer.context, 'error')
+        view = removeAllProxies(renderer)
+        locate(error, view.context, 'error')
         raise PublicationErrorBubble(error)
     except Exception as e:
-        error = LocationProxy(e)
-        locate(error, renderer.context, 'error')
-        result = queryMultiAdapter((error, renderer.request), IHTTPRenderer)
+        error = LocationProxy(removeAllProxies(e))
+        view = removeAllProxies(renderer)
+        locate(error, view.context, 'error')
+        result = queryMultiAdapter((error, view.request), IHTTPRenderer)
         if result is not None:
             try:
                 return result()
