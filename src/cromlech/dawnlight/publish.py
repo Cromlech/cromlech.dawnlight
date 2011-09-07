@@ -101,4 +101,4 @@ def publish_http_renderer(renderer):
                 raise PublicationError(
                     'A publication error (%r) happened, while trying to '
                     'render the error (%r)' % (e2, e))
-        raise e
+        raise
