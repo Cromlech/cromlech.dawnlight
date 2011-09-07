@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.3a2 (2011-09-07)
+------------------
+
+- The error rendering now strips the original failing view of all its
+  proxies, to avoid security proxies and other blocking proxies that can
+  shadow the true result.
+
+
 0.3a1 (2011-09-03)
 ------------------
 

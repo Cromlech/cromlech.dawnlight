@@ -7,6 +7,7 @@ import grokcore.component as grok
 from cromlech.io.testing import TestRequest
 from cromlech.io.interfaces import IPublisher, IRequest
 from cromlech.browser.interfaces import IHTTPRenderer, ITraverser
+from cromlech.dawnlight.lookup import ViewLookup
 from cromlech.dawnlight import (
     ResolveError, IDawnlightApplication, DawnlightPublisher,
     PublicationError, PublicationErrorBubble)
@@ -15,14 +16,37 @@ from zope.interface import Interface, implements
 from zope.testing.cleanup import cleanUp
 from zope.component import (
     queryMultiAdapter, provideAdapter, ComponentLookupError)
+from zope.location import LocationProxy
+
+
+class FailingProxy(LocationProxy):
+
+    def __call__(self):
+        raise AttributeError
+
+    def __getattr__(self, name):
+        if name == 'context':
+            raise AttributeError
+        return LocationProxy.__getattr__(self, name)
+
+    def __getattribute__(self, name):
+        if name == 'context':
+            raise AttributeError
+        return LocationProxy.__getattribute__(self, name)
+
+
+def wrap_http_renderer(request, obj, name=""):
+    view = queryMultiAdapter((obj, request), IHTTPRenderer, name=name)
+    if view is not None:
+        view = FailingProxy(view)
+    return view
 
 
 def setup_module(module):
     """Grok the publish module
     """
     grok.testing.grok("cromlech.dawnlight")
-    provideAdapter(RawView, (IModel, IRequest),
-                   IHTTPRenderer, name=u'index')
+    provideAdapter(RawView, (IModel, IRequest), IHTTPRenderer, name=u'index')
 
 
 def teardown_module(module):
@@ -220,6 +244,50 @@ def test_uncomplete_publication():
         publisher.publish(root)
 
 
+class AttributeErrorView(RawView):
+    
+    def __call__(self):
+        return u"AttributeError caught"
+
+
+class InnocentView(RawView):
+    
+    def __call__(self):
+        return "%r is innocent !" % self.context
+
+
+def test_unproxification():
+    """test for unproxified error view publishing.
+    """
+    root = get_structure()
+    
+    provideAdapter(
+        AttributeErrorView, (AttributeError, IRequest), IHTTPRenderer)
+
+    provideAdapter(
+        InnocentView, (IModel, IRequest), IHTTPRenderer, name="innocent")
+ 
+    req = TestRequest(path="/a/@@innocent")
+    proxified = wrap_http_renderer(req, root.a, "innocent")
+
+    with pytest.raises(AttributeError):
+        proxified.context
+
+    with pytest.raises(AttributeError):
+        proxified()
+
+    publisher = DawnlightPublisher(
+        req, Application(), view_lookup=ViewLookup(lookup=wrap_http_renderer))
+
+    assert publisher.publish(root) == u'AttributeError caught'
+
+
+class NotImplementedView(RawView):
+    
+    def __call__(self):
+        return u"Not implemented: %s" % self.context
+
+
 class FaultyInit(RawView):
     
     def __init__(self, context, request):
@@ -236,12 +304,6 @@ class LookupFailure(RawView):
     
     def __call__(self):
         raise ComponentLookupError('This is bad.')
-
-
-class NotImplementedView(RawView):
-    
-    def __call__(self):
-        return u"Not implemented: %s" % self.context
 
 
 def test_faulty_resolution():
@@ -274,7 +336,6 @@ def test_faulty_resolution():
     req = TestRequest(path="/a/faulty_caller")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == u'Not implemented: call failed'
-
 
     # Simulation of a component lookup error
     provideAdapter(LookupFailure, (IModel, IRequest),

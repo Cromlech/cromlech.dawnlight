@@ -88,7 +88,7 @@ def publish_http_renderer(renderer):
         locate(error, view.context, 'error')
         raise PublicationErrorBubble(error)
     except Exception as e:
-        error = LocationProxy(removeAllProxies(e))
+        error = LocationProxy(e)
         view = removeAllProxies(renderer)
         locate(error, view.context, 'error')
         result = queryMultiAdapter((error, view.request), IHTTPRenderer)
@@ -101,5 +101,4 @@ def publish_http_renderer(renderer):
                 raise PublicationError(
                     'A publication error (%r) happened, while trying to '
                     'render the error (%r)' % (e2, e))
-        else:
-            raise
+        raise e

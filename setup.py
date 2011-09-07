@@ -3,7 +3,7 @@
 from os.path import join
 from setuptools import setup, find_packages
 
-version = '0.3a1'
+version = '0.3a2'
 
 install_requires = [
     'cromlech.browser',
@@ -14,6 +14,7 @@ install_requires = [
     'zope.component',
     'zope.interface',
     'zope.location',
+    'zope.proxy',
     ]
 
 tests_require = [
