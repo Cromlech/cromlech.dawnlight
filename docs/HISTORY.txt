@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.3a3 (2011-09-07)
+------------------
+
+- better re-raise of errors in publisher
+
 0.3a2 (2011-09-07)
 ------------------
 
