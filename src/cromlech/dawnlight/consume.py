@@ -36,6 +36,7 @@ class AttributeConsumer(grok.Subscription):
     __call__ = traverse
 
     def _resolve(self, obj, ns, name, request):
+        name = name.encode('utf-8') if isinstance(name, unicode) else name
         if ns == DEFAULT and not name.startswith('_'):
             attr = getattr(obj, name, _marker)
             if attr is not _marker:

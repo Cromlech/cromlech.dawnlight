@@ -229,6 +229,22 @@ def test_no_view():
         publisher.publish(root)
 
 
+def test_urlencoded_path():
+    """test urlencoded path
+    """
+    root = Container()
+    setattr(root, "à", Model())
+    root[u"â ñ"] = Model()
+    
+    req = TestRequest(path="/%C3%A0")
+    publisher = DawnlightPublisher(req, Application())
+    assert publisher.publish(root) == getattr(root, 'à')
+
+    req = TestRequest(path="/%C3%A2%20%C3%B1")
+    publisher = DawnlightPublisher(req, Application())
+    assert publisher.publish(root) == root[u"â ñ"]
+
+
 def test_uncomplete_publication():
     """test for raising PublicationError.
     """
