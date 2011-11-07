@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.3b1 (2011-11-04)
+------------------
+
+- url unquote path to unicode before traversing so content under
+  a unicode key in a container is reached by traverser
+
 0.3a3 (2011-09-07)
 ------------------
 
