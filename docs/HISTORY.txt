@@ -7,7 +7,7 @@ Changelog
 - Now only attributes declare thanks to traversable directive are
   traversable ! This help keeping things under control.
 
-  Note that it does not work as in grok : it is a ONCE directive
+  Note that it does not work as in grok : it is a ONCE directive
   either you inherit it or you re-declare all attributes.
 
 0.3b1 (2011-11-04)
