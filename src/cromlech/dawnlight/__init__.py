@@ -8,6 +8,7 @@ class IDawnlightApplication(Interface):
     """
 
 from dawnlight import ResolveError  # exposing for convenience.
+from cromlech.dawnlight.directives import traversable
 from cromlech.dawnlight.lookup import ModelLookup, ViewLookup
 from cromlech.dawnlight.publish import (
     DawnlightPublisher, PublicationError, PublicationErrorBubble)

@@ -4,6 +4,7 @@ import grokcore.component as grok
 from dawnlight import DEFAULT
 from dawnlight.interfaces import IConsumer
 from cromlech.browser.interfaces import ITraverser
+from cromlech.dawnlight.directives import traversable
 from zope.interface import Interface
 from zope.component import queryMultiAdapter
 
@@ -25,9 +26,8 @@ def traverse(consumer, request, obj, stack):
 
 class AttributeConsumer(grok.Subscription):
     """Default path consumer for model lookup, traversing objects
-    using their attributes
-
-    It does not traverse on reserved / private attributes
+    using their attributes that are declared traversable through
+    traversable directive
     """
     grok.implements(IConsumer)
     grok.context(Interface)
@@ -37,7 +37,8 @@ class AttributeConsumer(grok.Subscription):
 
     def _resolve(self, obj, ns, name, request):
         name = name.encode('utf-8') if isinstance(name, unicode) else name
-        if ns == DEFAULT and not name.startswith('_'):
+        traversables_attrs = traversable.bind().get(self.context)
+        if ns == DEFAULT and name in traversables_attrs:
             attr = getattr(obj, name, _marker)
             if attr is not _marker:
                 return attr
