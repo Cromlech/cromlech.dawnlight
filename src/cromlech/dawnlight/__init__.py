@@ -7,13 +7,13 @@ class IDawnlightApplication(Interface):
     """Application using the dawnlight publication mechanism.
     """
 
+
 from dawnlight import ResolveError  # exposing for convenience.
 
 from cromlech.dawnlight.directives import traversable
-
-from cromlech.dawnlight.lookup import ModelLookup
-from cromlech.dawnlight.lookup import query_http_renderer
-from cromlech.dawnlight.lookup import renderer_locator, renderer_protector
+from cromlech.dawnlight.lookup import ViewLookup, ModelLookup
+from cromlech.dawnlight.utils import query_http_renderer
+from cromlech.dawnlight.utils import renderer_locator, renderer_protector
 
 from cromlech.dawnlight.publish import DawnlightPublisher
 from cromlech.dawnlight.publish import PublicationError, PublicationErrorBubble

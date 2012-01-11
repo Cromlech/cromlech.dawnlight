@@ -3,13 +3,14 @@
 from os.path import join
 from setuptools import setup, find_packages
 
-version = '0.3b2'
+version = '0.3b3'
 
 install_requires = [
-    'cromlech.browser',
-    'cromlech.io',
+    'cromlech.browser >= 0.3a2',
+    'cromlech.io >= 0.2a1',
     'dawnlight >= 0.13b2',
     'grokcore.component >= 2.4',
+    'martian',
     'setuptools',
     'zope.component',
     'zope.interface',
@@ -18,6 +19,7 @@ install_requires = [
     ]
 
 tests_require = [
+    'cromlech.browser [test]',
     'pytest',
     'zope.testing',
     ]

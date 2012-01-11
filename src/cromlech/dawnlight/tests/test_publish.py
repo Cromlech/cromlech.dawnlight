@@ -4,11 +4,12 @@
 import pytest
 import grokcore.component as grok
 
-from cromlech.io.testing import TestRequest
-from cromlech.io.interfaces import IPublisher, IRequest
-from cromlech.browser.interfaces import IHTTPRenderer, ITraverser
+from dawnlight import ViewLookup
+
+from cromlech.browser.testing import TestHTTPRequest
+from cromlech.io.interfaces import IPublisher
+from cromlech.browser.interfaces import IHTTPRequest, IHTTPRenderer, ITraverser
 from cromlech.dawnlight.directives import traversable
-from cromlech.dawnlight.lookup import ViewLookup
 from cromlech.dawnlight import (
     ResolveError, IDawnlightApplication, DawnlightPublisher,
     PublicationError, PublicationErrorBubble)
@@ -47,7 +48,8 @@ def setup_module(module):
     """Grok the publish module
     """
     grok.testing.grok("cromlech.dawnlight")
-    provideAdapter(RawView, (IModel, IRequest), IHTTPRenderer, name=u'index')
+    provideAdapter(
+        RawView, (IModel, IHTTPRequest), IHTTPRenderer, name=u'index')
 
 
 def teardown_module(module):
@@ -127,19 +129,19 @@ def get_structure():
 
 
 def test_get_publisher():
-    """Publisher is an adapter on IRequest, IDawnlightApplication
+    """Publisher is an adapter on IHTTPRequest, IDawnlightApplication
     """
     assert queryMultiAdapter(
-        (TestRequest(), Application()), IPublisher) is not None
+        (TestHTTPRequest(), Application()), IPublisher) is not None
 
 
 def test_attribute_traversing():
     """test that attributes traversing works"""
     root = get_structure()
-    req = TestRequest(path="/a")
+    req = TestHTTPRequest(path="/a")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == root.a
-    req = TestRequest(path="/_b")
+    req = TestHTTPRequest(path="/_b")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == root._b
 
@@ -148,11 +150,11 @@ def test_private_attribute_not_traversing():
     """test that traversing on private attributes does not works"""
     root = get_structure()
 
-    req = TestRequest(path="/c")
+    req = TestHTTPRequest(path="/c")
     publisher = DawnlightPublisher(req, Application())
     with pytest.raises(ResolveError):
         publisher.publish(root)
-    req = TestRequest(path="/not_existing")
+    req = TestHTTPRequest(path="/not_existing")
     publisher = DawnlightPublisher(req, Application())
     with pytest.raises(ResolveError):
         publisher.publish(root)
@@ -162,7 +164,7 @@ def test_item_traversing():
     """test that sub item traversing works"""
     root = get_structure()
 
-    req = TestRequest(path="/b")
+    req = TestHTTPRequest(path="/b")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == root['b']
 
@@ -170,11 +172,11 @@ def test_item_traversing():
 def test_end_with_slash():
     root = get_structure()
 
-    req = TestRequest(path="/b/")
+    req = TestHTTPRequest(path="/b/")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == root['b']
 
-    req = TestRequest(path="/b///")
+    req = TestHTTPRequest(path="/b///")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == root['b']
 
@@ -183,7 +185,7 @@ def test_attribute_masquerade_item():
     """test that attributes takes precedence over sub item"""
     root = get_structure()
     root['a'] = Model()
-    req = TestRequest(path="/a")
+    req = TestHTTPRequest(path="/a")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == root.a
     assert publisher.publish(root) != root['a']
@@ -194,13 +196,13 @@ def test_traverser_traversing():
 
     # register traverser for namespace spam
     provideAdapter(
-        SpamTraverser, (Container, IRequest), ITraverser, name=u'spam')
+        SpamTraverser, (Container, IHTTPRequest), ITraverser, name=u'spam')
 
-    req = TestRequest(path="/++spam++foo")
+    req = TestHTTPRequest(path="/++spam++foo")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == root._spam_foo
 
-    req = TestRequest(path="/++spam++bar")
+    req = TestHTTPRequest(path="/++spam++bar")
     publisher = DawnlightPublisher(req, Application())
     with pytest.raises(AttributeError):
         publisher.publish(root)
@@ -209,15 +211,15 @@ def test_traverser_traversing():
 def test_script_name():
     """test that request.script_name is taken into account"""
     root = get_structure()
-    req = TestRequest(path="/foo/a", script_name="/foo")
+    req = TestHTTPRequest(path="/foo/a", script_name="/foo")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == root.a
 
-    req = TestRequest(path="/foo/a", script_name="/bar")
+    req = TestHTTPRequest(path="/foo/a", script_name="/bar")
     publisher = DawnlightPublisher(req, Application())
     with pytest.raises(ResolveError):
         publisher.publish(root)
-    req = TestRequest(path="/a", script_name="/foo")
+    req = TestHTTPRequest(path="/a", script_name="/foo")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == root.a
 
@@ -226,7 +228,7 @@ def test_no_view():
     """test for raising ResolveError.
     """
     root = get_structure()
-    req = TestRequest(path="/b/@@unknown")
+    req = TestHTTPRequest(path="/b/@@unknown")
     publisher = DawnlightPublisher(req, Application())
     with pytest.raises(ResolveError):
         publisher.publish(root)
@@ -239,11 +241,11 @@ def test_urlencoded_path():
     setattr(root, "à", Model())
     root[u"â ñ"] = Model()
     
-    req = TestRequest(path="/%C3%A0")
+    req = TestHTTPRequest(path="/%C3%A0")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == getattr(root, 'à')
 
-    req = TestRequest(path="/%C3%A2%20%C3%B1")
+    req = TestHTTPRequest(path="/%C3%A2%20%C3%B1")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == root[u"â ñ"]
 
@@ -257,7 +259,7 @@ def test_uncomplete_publication():
     def no_lookup(request, result, crumbs):
         return None
 
-    req = TestRequest(path="/a")
+    req = TestHTTPRequest(path="/a")
     publisher = DawnlightPublisher(req, Application(), view_lookup=no_lookup)
     with pytest.raises(PublicationError):
         publisher.publish(root)
@@ -281,12 +283,12 @@ def test_unproxification():
     root = get_structure()
     
     provideAdapter(
-        AttributeErrorView, (AttributeError, IRequest), IHTTPRenderer)
+        AttributeErrorView, (AttributeError, IHTTPRequest), IHTTPRenderer)
 
     provideAdapter(
-        InnocentView, (IModel, IRequest), IHTTPRenderer, name="innocent")
+        InnocentView, (IModel, IHTTPRequest), IHTTPRenderer, name="innocent")
  
-    req = TestRequest(path="/a/@@innocent")
+    req = TestHTTPRequest(path="/a/@@innocent")
     proxified = wrap_http_renderer(req, root.a, "innocent")
 
     with pytest.raises(AttributeError):
@@ -329,20 +331,20 @@ def test_faulty_resolution():
     root = get_structure()
 
     # Fail on the renderer init
-    provideAdapter(FaultyInit, (IModel, IRequest),
+    provideAdapter(FaultyInit, (IModel, IHTTPRequest),
                    IHTTPRenderer, name=u'faulty_init')
     
-    req = TestRequest(path="/a/faulty_init")
+    req = TestHTTPRequest(path="/a/faulty_init")
     publisher = DawnlightPublisher(req, Application())
     with pytest.raises(NotImplementedError) as e:
         publisher.publish(root)
         assert e.value == 'init failed'
 
     # Fail in the renderer call
-    provideAdapter(FaultyCaller, (IModel, IRequest),
+    provideAdapter(FaultyCaller, (IModel, IHTTPRequest),
                    IHTTPRenderer, name=u'faulty_caller')
 
-    req = TestRequest(path="/a/faulty_caller")
+    req = TestHTTPRequest(path="/a/faulty_caller")
     publisher = DawnlightPublisher(req, Application())
     with pytest.raises(NotImplementedError) as e:
         publisher.publish(root)
@@ -350,17 +352,17 @@ def test_faulty_resolution():
 
     # We can render errors
     provideAdapter(
-        NotImplementedView, (NotImplementedError, IRequest), IHTTPRenderer)
+        NotImplementedView, (NotImplementedError, IHTTPRequest), IHTTPRenderer)
 
-    req = TestRequest(path="/a/faulty_caller")
+    req = TestHTTPRequest(path="/a/faulty_caller")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == u'Not implemented: call failed'
 
     # Simulation of a component lookup error
-    provideAdapter(LookupFailure, (IModel, IRequest),
+    provideAdapter(LookupFailure, (IModel, IHTTPRequest),
                    IHTTPRenderer, name=u'fail_lookup')
 
-    req = TestRequest(path="/a/fail_lookup")
+    req = TestHTTPRequest(path="/a/fail_lookup")
     publisher = DawnlightPublisher(req, Application())
     with pytest.raises(PublicationErrorBubble) as e:
         publisher.publish(root)

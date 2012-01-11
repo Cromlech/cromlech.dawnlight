@@ -1,14 +1,30 @@
 Changelog
 =========
 
+0.3b3 (2012-01-11)
+------------------
+
+- We no longer inherit from `ViewLookup` to provide a base lookup method.
+  This method can be simply passed to the constructor. 2 decorator-like
+  functions have been added in `utils` allowing to wrap a basic lookup
+  function to provide locatisation and/or protection.
+
+  The protection wrapper is only available if the `zope.security` package
+  is present as it uses the `ProxyFactory` mechanism.
+
+- Adapted the code and tests to the latest interfaces split made in
+  `cromlech.io` and `cromlech.browser`.
+
+
 0.3b2 (2011-11-23)
 ------------------
 
-- Now only attributes declare thanks to traversable directive are
+- Now only attributes declared thanks to `traversable` directive are
   traversable ! This help keeping things under control.
 
-  Note that it does not work as in grok : it is a ONCE directive
+  Note that it does not work like in `Grok` : it is a ONCE directive
   either you inherit it or you re-declare all attributes.
+
 
 0.3b1 (2011-11-04)
 ------------------
@@ -16,10 +32,12 @@ Changelog
 - url unquote path to unicode before traversing so content under
   a unicode key in a container is reached by traverser
 
+
 0.3a3 (2011-09-07)
 ------------------
 
 - better re-raise of errors in publisher
+
 
 0.3a2 (2011-09-07)
 ------------------

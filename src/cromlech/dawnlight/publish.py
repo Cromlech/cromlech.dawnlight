@@ -3,9 +3,11 @@ from urllib import unquote
 
 import dawnlight
 import grokcore.component as grok
-from cromlech.browser.interfaces import IHTTPRenderer
-from cromlech.dawnlight import IDawnlightApplication, ModelLookup, ViewLookup
-from cromlech.io.interfaces import IPublisher, IRequest, IResponse
+from cromlech.browser import IHTTPRenderer, IHTTPRequest, IHTTPResponse
+from cromlech.dawnlight import IDawnlightApplication
+from cromlech.dawnlight.lookup import ViewLookup, ModelLookup
+from cromlech.dawnlight.utils import query_http_renderer
+from cromlech.io.interfaces import IPublisher
 from zope.component import queryMultiAdapter
 from zope.component.interfaces import ComponentLookupError
 from zope.location import LocationProxy, locate
@@ -17,7 +19,7 @@ shortcuts = {
     }
 
 base_model_lookup = ModelLookup()
-base_view_lookup = ViewLookup()
+base_view_lookup = dawnlight.ViewLookup(query_http_renderer)
 
 
 class PublicationError(Exception):
@@ -62,7 +64,7 @@ class DawnlightPublisher(object):
         stack = dawnlight.parse_path(path, shortcuts)
 
         model, crumbs = self.model_lookup(self.request, root, stack)
-        if IResponse.providedBy(model):
+        if IHTTPResponse.providedBy(model):
             # The found object can be returned safely.
             return model
 
@@ -70,10 +72,10 @@ class DawnlightPublisher(object):
         view = self.view_lookup(self.request, model, crumbs)
         if view is None:
             raise PublicationError('%r can not be rendered.' % model)
-        return IResponse(view)
+        return IHTTPResponse(view)
 
 
-@grok.adapter(IRequest, IDawnlightApplication)
+@grok.adapter(IHTTPRequest, IDawnlightApplication)
 @grok.implementer(IPublisher)
 def dawnlight_publisher(request, application):
     return DawnlightPublisher(
@@ -81,7 +83,7 @@ def dawnlight_publisher(request, application):
 
 
 @grok.adapter(IHTTPRenderer)
-@grok.implementer(IResponse)
+@grok.implementer(IHTTPResponse)
 def publish_http_renderer(renderer):
     try:
         return renderer()
