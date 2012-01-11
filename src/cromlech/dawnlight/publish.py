@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from urllib import unquote
 
 import dawnlight
 import grokcore.component as grok
@@ -50,12 +51,14 @@ class DawnlightPublisher(object):
         self.view_lookup = view_lookup
 
     def base_path(self, path):
-        if path.startswith(self.request.script_name):
-            return path[len(self.request.script_name):]
+        script_name = unicode(self.request.script_name, 'utf-8')
+        if path.startswith(script_name):
+            return path[len(script_name):]
         return path
 
     def publish(self, root, handle_errors=True):
-        path = self.base_path(self.request.path)
+        path = unicode(unquote(self.request.path), 'utf-8')
+        path = self.base_path(path)
         stack = dawnlight.parse_path(path, shortcuts)
 
         model, crumbs = self.model_lookup(self.request, root, stack)
@@ -101,4 +104,4 @@ def publish_http_renderer(renderer):
                 raise PublicationError(
                     'A publication error (%r) happened, while trying to '
                     'render the error (%r)' % (e2, e))
-        raise e
+        raise

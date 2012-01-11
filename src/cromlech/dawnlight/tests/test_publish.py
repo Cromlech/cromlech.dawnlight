@@ -7,6 +7,7 @@ import grokcore.component as grok
 from cromlech.io.testing import TestRequest
 from cromlech.io.interfaces import IPublisher, IRequest
 from cromlech.browser.interfaces import IHTTPRenderer, ITraverser
+from cromlech.dawnlight.directives import traversable
 from cromlech.dawnlight.lookup import ViewLookup
 from cromlech.dawnlight import (
     ResolveError, IDawnlightApplication, DawnlightPublisher,
@@ -61,9 +62,11 @@ class Application(object):
 
 class Container(dict):
 
-    _protected_attr = ''
-    __special_attr__ = ''
-    __private_attr = ''
+    traversable('a', '_b', 'à')
+
+    a = None
+    _b = None
+    c = None
 
 
 class IModel(Interface):
@@ -116,6 +119,8 @@ def get_structure():
     """
     root = Container()
     setattr(root, "a", Model())
+    setattr(root, "_b", Model())
+    setattr(root, "c", Model())
     root["b"] = Model()
     root._spam_foo = Model()
     return root
@@ -134,23 +139,20 @@ def test_attribute_traversing():
     req = TestRequest(path="/a")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == root.a
+    req = TestRequest(path="/_b")
+    publisher = DawnlightPublisher(req, Application())
+    assert publisher.publish(root) == root._b
 
 
 def test_private_attribute_not_traversing():
     """test that traversing on private attributes does not works"""
     root = get_structure()
 
-    req = TestRequest(path="/_protected_attr")
+    req = TestRequest(path="/c")
     publisher = DawnlightPublisher(req, Application())
     with pytest.raises(ResolveError):
         publisher.publish(root)
-
-    req = TestRequest(path="/__private_attr")
-    publisher = DawnlightPublisher(req, Application())
-    with pytest.raises(ResolveError):
-        publisher.publish(root)
-
-    req = TestRequest(path="/__special_attr__")
+    req = TestRequest(path="/not_existing")
     publisher = DawnlightPublisher(req, Application())
     with pytest.raises(ResolveError):
         publisher.publish(root)
@@ -180,10 +182,11 @@ def test_end_with_slash():
 def test_attribute_masquerade_item():
     """test that attributes takes precedence over sub item"""
     root = get_structure()
-    root.b = Model()
-    req = TestRequest(path="/b")
+    root['a'] = Model()
+    req = TestRequest(path="/a")
     publisher = DawnlightPublisher(req, Application())
-    assert publisher.publish(root) != root['b']
+    assert publisher.publish(root) == root.a
+    assert publisher.publish(root) != root['a']
 
 
 def test_traverser_traversing():
@@ -227,6 +230,22 @@ def test_no_view():
     publisher = DawnlightPublisher(req, Application())
     with pytest.raises(ResolveError):
         publisher.publish(root)
+
+
+def test_urlencoded_path():
+    """test urlencoded path
+    """
+    root = Container()
+    setattr(root, "à", Model())
+    root[u"â ñ"] = Model()
+    
+    req = TestRequest(path="/%C3%A0")
+    publisher = DawnlightPublisher(req, Application())
+    assert publisher.publish(root) == getattr(root, 'à')
+
+    req = TestRequest(path="/%C3%A2%20%C3%B1")
+    publisher = DawnlightPublisher(req, Application())
+    assert publisher.publish(root) == root[u"â ñ"]
 
 
 def test_uncomplete_publication():
