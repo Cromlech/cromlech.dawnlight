@@ -26,7 +26,7 @@ def renderer_locator(func):
     context.
     """
     def locate_renderer(request, obj, name=""):
-        renderer = func(request, obj, name)
+        renderer = func(request, obj, name=name)
         if renderer is not None:
             if not ILocation.providedBy(renderer):
                 renderer = LocationProxy(renderer)
@@ -41,7 +41,7 @@ def renderer_protector(func):
     proxy, security the component accesses.
     """
     def protect_renderer(request, obj, name=""):
-        renderer = func(request, obj, name)
+        renderer = func(request, obj, name=name)
         if renderer is not None:
             return ProxyFactory(renderer)
         return renderer
