@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.3b4 (2012-01-11)
+------------------
+
+- The lookup wrappers have now been modified to only be used on the lookup
+  function passed to the `ViewLookup` component.
+
+
 0.3b3 (2012-01-11)
 ------------------
 

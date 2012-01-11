@@ -21,12 +21,12 @@ def query_http_renderer(request, obj, name=""):
 
 
 def renderer_locator(func):
-    """Can be used as a decorator on the `__call__` method of the
-    `ViewLookup` component. It provides a way to relate the looked
-    up renderer with its lookup context.
+    """Can be used as a decorator on the `query_http_renderer` function.
+    It provides a way to relate the looked up renderer with its lookup
+    context.
     """
-    def locate_renderer(request, obj, stack):
-        renderer = func(request, obj, stack)
+    def locate_renderer(request, obj, name=""):
+        renderer = func(request, obj, name)
         if renderer is not None:
             if not ILocation.providedBy(renderer):
                 renderer = LocationProxy(renderer)
@@ -36,12 +36,12 @@ def renderer_locator(func):
 
 
 def renderer_protector(func):
-    """Can be used as a decorator on the `__call__` method of the
-    `ViewLookup` component. It provides a way to wrap the looked
-    up renderer in a security proxy, security the component accesses.
+    """Can be used as a decorator on the `query_http_renderer` function.
+    It provides a way to wrap the looked up renderer in a security
+    proxy, security the component accesses.
     """
-    def protect_renderer(request, obj, stack):
-        renderer = func(request, obj, stack)
+    def protect_renderer(request, obj, name=""):
+        renderer = func(request, obj, name)
         if renderer is not None:
             return ProxyFactory(renderer)
         return renderer
