@@ -38,7 +38,7 @@ def renderer_locator(func):
 def renderer_protector(func):
     """Can be used as a decorator on the `query_http_renderer` function.
     It provides a way to wrap the looked up renderer in a security
-    proxy, security the component accesses.
+    proxy, securing the component accesses.
     """
     def protect_renderer(request, obj, name=""):
         renderer = func(request, obj, name=name)
