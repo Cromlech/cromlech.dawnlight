@@ -1,6 +1,19 @@
 Changelog
 =========
 
+0.4 (2012-01-24)
+----------------
+
+- Error handling is now implemented as a decorator for the `publish` method.
+  This allows more flexibility in the catching and rendering of errors.
+  A base adapter is provided, adapting an exception to `IHTTPResponse`,
+  using the query of an `IHTTPRenderer`.
+
+  The adapter from `IHTTPRenderer` to `IHTTPResponse` has been modified
+  accordingly and heavily commented as it was judged a bit cryptic by
+  the newcomers. 
+
+
 0.3b4 (2012-01-11)
 ------------------
 

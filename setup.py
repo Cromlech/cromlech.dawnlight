@@ -3,10 +3,10 @@
 from os.path import join
 from setuptools import setup, find_packages
 
-version = '0.3b4'
+version = '0.4'
 
 install_requires = [
-    'cromlech.browser >= 0.3a2',
+    'cromlech.browser >= 0.4',
     'cromlech.io >= 0.2a1',
     'dawnlight >= 0.13b2',
     'grokcore.component >= 2.4',
