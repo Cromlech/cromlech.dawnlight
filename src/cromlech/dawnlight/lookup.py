@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from dawnlight import ViewLookup, ModelLookup as BaseModelLookup
+from dawnlight import ModelLookup as BaseModelLookup
 from dawnlight.interfaces import IConsumer
 from grokcore.component import querySubscriptions
 

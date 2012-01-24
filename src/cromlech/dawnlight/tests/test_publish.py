@@ -138,9 +138,11 @@ def test_get_publisher():
 def test_attribute_traversing():
     """test that attributes traversing works"""
     root = get_structure()
+
     req = TestHTTPRequest(path="/a")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == root.a
+
     req = TestHTTPRequest(path="/_b")
     publisher = DawnlightPublisher(req, Application())
     assert publisher.publish(root) == root._b
@@ -154,6 +156,7 @@ def test_private_attribute_not_traversing():
     publisher = DawnlightPublisher(req, Application())
     with pytest.raises(ResolveError):
         publisher.publish(root)
+
     req = TestHTTPRequest(path="/not_existing")
     publisher = DawnlightPublisher(req, Application())
     with pytest.raises(ResolveError):

@@ -7,6 +7,7 @@ from zope.location import ILocation, LocationProxy, locate
 try:
     from zope.security.proxy import ProxyFactory
 except ImportError:
+
     def ProxyFactory(obj):
         """A replacement that raises an error.
         """

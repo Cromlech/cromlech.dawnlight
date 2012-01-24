@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-from urllib import unquote
 
 import dawnlight
 import grokcore.component as grok
+
+from urllib import unquote
 from cromlech.browser import IHTTPRenderer, IHTTPRequest, IHTTPResponse
 from cromlech.dawnlight import IDawnlightApplication
-from cromlech.dawnlight.lookup import ViewLookup, ModelLookup
+from cromlech.dawnlight.lookup import ModelLookup
 from cromlech.dawnlight.utils import query_http_renderer
 from cromlech.io.interfaces import IPublisher
 from zope.component import queryMultiAdapter
@@ -20,6 +21,21 @@ shortcuts = {
 
 base_model_lookup = ModelLookup()
 base_view_lookup = dawnlight.ViewLookup(query_http_renderer)
+
+
+def safeguard(func):
+    def handle_errors(component, root, handle_errors=True):
+        if handle_errors is True:
+            try:
+                response = func(component, root, handle_errors=handle_errors)
+            except Exception, e:
+                response = queryMultiAdapter(
+                    (component.request, e), IHTTPResponse)
+                if response is None:
+                    raise
+            return response
+        return func(component, root, handle_errors=handle_errors)
+    return handle_errors
 
 
 class PublicationError(Exception):
@@ -58,7 +74,8 @@ class DawnlightPublisher(object):
             return path[len(script_name):]
         return path
 
-    def publish(self, root, handle_errors=True):
+    @safeguard
+    def publish(self, root, **args):
         path = unicode(unquote(self.request.path), 'utf-8')
         path = self.base_path(path)
         stack = dawnlight.parse_path(path, shortcuts)
@@ -82,28 +99,39 @@ def dawnlight_publisher(request, application):
         request, application, base_model_lookup, base_view_lookup)
 
 
+@grok.adapter(IHTTPRequest, Exception)
+@grok.implementer(IHTTPResponse)
+def exception_view(request, exception):
+    view = queryMultiAdapter((exception, request), IHTTPRenderer)
+    if view is not None:
+        return view()
+    return None
+
+
 @grok.adapter(IHTTPRenderer)
 @grok.implementer(IHTTPResponse)
 def publish_http_renderer(renderer):
+    """Adaptation has a tendency to shadow some kind of errors.
+    More precisely, non-handled ComponentLookupError can be seen
+    as an adaptation failure while they originate from deeper in the
+    code. That's why we cover that basis.
+    """
     try:
         return renderer()
     except ComponentLookupError as e:
-        error = LocationProxy(e)
+
+        # The render is likely to be wrapped in a security proxy.
+        # We get rid of that proxy to access the component freely.
         view = removeAllProxies(renderer)
+
+        # Locating the error allows us to know more about the failure
+        # context. We use the context of the view, as we might have
+        # removed the location proxy of the view.
+        error = LocationProxy(e)
         locate(error, view.context, 'error')
+
+        # Finally, we wrap the error in a 'bubble', keeping its traceback
+        # and we raise the bubble. A bubble is an error that is internal
+        # to the publisher. The publisher will then decide what to do with
+        # that wrapped error.
         raise PublicationErrorBubble(error)
-    except Exception as e:
-        error = LocationProxy(e)
-        view = removeAllProxies(renderer)
-        locate(error, view.context, 'error')
-        result = queryMultiAdapter((error, view.request), IHTTPRenderer)
-        if result is not None:
-            try:
-                return result()
-            except Exception as e2:
-                # We failed to fail.
-                # Let's return something sensible.
-                raise PublicationError(
-                    'A publication error (%r) happened, while trying to '
-                    'render the error (%r)' % (e2, e))
-        raise
