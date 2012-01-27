@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from urllib import unquote
+
 from cromlech.browser.interfaces import IHTTPRenderer
 from zope.component import queryMultiAdapter
 from zope.location import ILocation, LocationProxy, locate
@@ -15,6 +17,13 @@ except ImportError:
             'No security factory as been registered. '
             'Unable to protect %r. Please see `zope.security` '
             'for more information regarding security proxies.')
+
+
+def safe_path(path):
+    path = unquote(path)
+    if not isinstance(path, unicode):
+        return unicode(path, 'utf-8')
+    return path
 
 
 def query_http_renderer(request, obj, name=""):

@@ -123,6 +123,7 @@ def get_structure():
     setattr(root, "a", Model())
     setattr(root, "_b", Model())
     setattr(root, "c", Model())
+    root[u"éléonore"] = Model()
     root["b"] = Model()
     root._spam_foo = Model()
     return root
@@ -140,7 +141,7 @@ def test_path_parsing():
 
     req = TestHTTPRequest(path=u"/éléonore")
     publisher = DawnlightPublisher(req, Application())
-    assert publisher.publish(root)
+    assert publisher.publish(root) == root[u"éléonore"]
 
 
 def test_attribute_traversing():

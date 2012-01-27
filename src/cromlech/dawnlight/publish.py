@@ -3,11 +3,10 @@
 import dawnlight
 import grokcore.component as grok
 
-from urllib import unquote
 from cromlech.browser import IHTTPRenderer, IHTTPRequest, IHTTPResponse
 from cromlech.dawnlight import IDawnlightApplication
 from cromlech.dawnlight.lookup import ModelLookup
-from cromlech.dawnlight.utils import query_http_renderer
+from cromlech.dawnlight.utils import query_http_renderer, safe_path
 from cromlech.io.interfaces import IPublisher
 from zope.component import queryMultiAdapter
 from zope.component.interfaces import ComponentLookupError
@@ -76,8 +75,7 @@ class DawnlightPublisher(object):
 
     @safeguard
     def publish(self, root, **args):
-        path = unicode(unquote(self.request.path), 'utf-8')
-        path = self.base_path(path)
+        path = self.base_path(safe_path(self.request.path))
         stack = dawnlight.parse_path(path, shortcuts)
 
         model, crumbs = self.model_lookup(self.request, root, stack)
