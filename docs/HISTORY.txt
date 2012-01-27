@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.4.1 (2012-01-27)
+------------------
+
+- Unicode paths were failing due to the transformation of the request path,
+  through `unquote` and then the transformation to unicode. This has been
+  fixed and tested.
+
+
 0.4 (2012-01-24)
 ----------------
 
