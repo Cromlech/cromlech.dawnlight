@@ -135,6 +135,14 @@ def test_get_publisher():
         (TestHTTPRequest(), Application()), IPublisher) is not None
 
 
+def test_path_parsing():
+    root = get_structure()
+
+    req = TestHTTPRequest(path=u"/éléonore")
+    publisher = DawnlightPublisher(req, Application())
+    assert publisher.publish(root)
+
+
 def test_attribute_traversing():
     """test that attributes traversing works"""
     root = get_structure()
