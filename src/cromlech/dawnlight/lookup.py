@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
 
+from cromlech.browser import IHTTPRenderer
+from cromlech.dawnlight.utils import query_http_renderer
+from dawnlight import DEFAULT, VIEW, ResolveError
 from dawnlight import ModelLookup as BaseModelLookup
 from dawnlight.interfaces import IConsumer
+from dawnlight.interfaces import ILookupComponent
 from grokcore.component import querySubscriptions
+from zope.interface import implements
 
 
 class ModelLookup(BaseModelLookup):
@@ -20,3 +25,49 @@ class ModelLookup(BaseModelLookup):
         subscription adapters.
         """
         return querySubscriptions(obj, IConsumer)
+
+
+class ViewLookup(object):
+    """Looks up a view using a given method.
+    """
+    implements(ILookupComponent)
+
+    def __init__(self, lookup=query_http_renderer, default_name=u'index'):
+        self.lookup = lookup
+        self.default_name = default_name
+
+    def __call__(self, request, obj, stack):
+        """Resolves a view.
+        """
+        default_fallback = False
+        unconsumed_amount = len(stack)
+        if unconsumed_amount == 0:
+            default_fallback = True
+            ns, name = VIEW, self.default_name
+        elif unconsumed_amount == 1:
+            ns, name = stack[0]
+        else:
+            raise ResolveError(
+                "Can't resolve view: stack is not fully consumed.")
+
+        if ns not in (DEFAULT, VIEW):
+            raise ResolveError(
+                "Can't resolve view: namespace %r is not supported." % ns)
+
+        # If this is the last node AND if it's a view, we return it.
+        if default_fallback and IHTTPRenderer.providedBy(obj):
+            return obj
+
+        # Else, we need to resolve the model into a view.
+        view = self.lookup(request, obj, name)
+        if view is None:
+            if default_fallback:
+                raise ResolveError(
+                    "Can't resolve view: no default view on %r." % obj)
+            else:
+                if ns == VIEW:
+                    raise ResolveError(
+                        "Can't resolve view: no view `%s` on %r." % (name, obj))
+                raise ResolveError(
+                    "%r is neither a view nor a model." % name)
+        return view

@@ -5,8 +5,8 @@ import grokcore.component as grok
 
 from cromlech.browser import IHTTPRenderer, IHTTPRequest, IHTTPResponse
 from cromlech.dawnlight import IDawnlightApplication
-from cromlech.dawnlight.lookup import ModelLookup
-from cromlech.dawnlight.utils import query_http_renderer, safe_path
+from cromlech.dawnlight.lookup import ModelLookup, ViewLookup
+from cromlech.dawnlight.utils import safe_path
 from cromlech.io.interfaces import IPublisher
 from zope.component import queryMultiAdapter
 from zope.component.interfaces import ComponentLookupError
@@ -19,7 +19,7 @@ shortcuts = {
     }
 
 base_model_lookup = ModelLookup()
-base_view_lookup = dawnlight.ViewLookup(query_http_renderer)
+base_view_lookup = ViewLookup()
 
 
 def safeguard(func):

@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.5 (2012-01-30)
+----------------
+
+- ``cromlech.dawnlight`` now provides a custom `ViewLookup` components that
+  is more flexible : trying to publish a view directly now works without the
+  need of an extra "default view".
+
+
 0.4.1 (2012-01-27)
 ------------------
 

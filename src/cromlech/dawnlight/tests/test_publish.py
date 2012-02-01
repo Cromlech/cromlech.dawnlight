@@ -3,8 +3,10 @@
 
 import pytest
 import grokcore.component as grok
+from grokcore.component.testing import grok_component
 
 from dawnlight import ViewLookup
+from dawnlight.interfaces import IConsumer
 
 from cromlech.browser.testing import TestHTTPRequest
 from cromlech.io.interfaces import IPublisher
@@ -381,3 +383,27 @@ def test_faulty_resolution():
 
     assert e.value.__class__ == PublicationErrorBubble
     assert e.value.wrapped.__class__ == ComponentLookupError
+
+
+def test_consumer_returning_view():
+
+    class ViewReturningConsumer(grok.Subscription):
+        grok.implements(IConsumer)
+        grok.context(Interface)
+
+        def __call__(self, request, obj, stack):
+            view = RawView(obj, request)
+            return True, view, []
+
+    grok_component('consumer', ViewReturningConsumer)
+
+    root = get_structure()
+    req = TestHTTPRequest(path="/it_will_return_a_view")
+    publisher = DawnlightPublisher(req, Application())
+    assert publisher.publish(root) == root
+
+    # The same test fail if we don't use the provided ViewLookup
+    publisher = DawnlightPublisher(
+        req, Application(), view_lookup=ViewLookup(lookup=wrap_http_renderer))
+    with pytest.raises(ResolveError) as e:
+        publisher.publish(root) == root
