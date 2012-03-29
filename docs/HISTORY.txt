@@ -1,6 +1,11 @@
 Changelog
 =========
 
+UNREALEASED
+-----------
+
+- keep original traceback info in PublicationErrorBubble
+
 0.5 (2012-01-30)
 ----------------
 

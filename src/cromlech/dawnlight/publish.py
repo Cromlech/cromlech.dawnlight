@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+import traceback
+import sys
+
 import dawnlight
 import grokcore.component as grok
 
@@ -44,16 +47,13 @@ class PublicationError(Exception):
 class PublicationErrorBubble(PublicationError):
     """Bubbling up error.
     """
-    def __init__(self, wrapped):
+    def __init__(self, wrapped, tb_info):
         self.wrapped = wrapped
         PublicationError.__init__(
-            self, 'Publication error: %s' % str(wrapped))
-
-    def __str__(self):
-        return str(self.wrapped)
-
-    def __repr__(self):
-        return repr(self.wrapped)
+            self,
+            'Publication error: %s\nOriginal traceback:\n%s' %
+            (str(wrapped),
+             '    '.join(traceback.format_exception(*tb_info))))
 
 
 class DawnlightPublisher(object):
@@ -132,4 +132,4 @@ def publish_http_renderer(renderer):
         # and we raise the bubble. A bubble is an error that is internal
         # to the publisher. The publisher will then decide what to do with
         # that wrapped error.
-        raise PublicationErrorBubble(error)
+        raise PublicationErrorBubble(error, sys.exc_info())
