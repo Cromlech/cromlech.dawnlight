@@ -282,7 +282,7 @@ def test_uncomplete_publication():
 class AttributeErrorView(RawView):
     
     def __call__(self):
-        return u"AttributeError caught"
+        return u"AttributeError caught on %s" % self.context.__parent__
 
 
 class InnocentView(RawView):
@@ -314,13 +314,13 @@ def test_unproxification():
     publisher = DawnlightPublisher(
         req, Application(), view_lookup=ViewLookup(lookup=wrap_http_renderer))
 
-    assert publisher.publish(root) == u'AttributeError caught'
+    assert publisher.publish(root) == u"AttributeError caught on %s" % root
 
 
 class NotImplementedView(RawView):
     
     def __call__(self):
-        return u"Not implemented: %s" % self.context
+        return u"Not implemented: %s" % self.__parent__
 
 
 class FaultyInit(RawView):

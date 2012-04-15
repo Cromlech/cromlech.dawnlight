@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.5.1 (2012-04-15)
+------------------
+
+- Errors and error views are now correctly located. Already located errors
+  are not subject to any change. They simply need to provide `Ilocation` to
+  avoid unwanted relocation.
+
+
 0.5 (2012-01-30)
 ----------------
 

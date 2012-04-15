@@ -10,7 +10,7 @@ from cromlech.dawnlight.utils import safe_path
 from cromlech.io.interfaces import IPublisher
 from zope.component import queryMultiAdapter
 from zope.component.interfaces import ComponentLookupError
-from zope.location import LocationProxy, locate
+from zope.location import LocationProxy, locate, ILocation
 from zope.proxy import removeAllProxies
 
 
@@ -28,6 +28,10 @@ def safeguard(func):
             try:
                 response = func(component, root, handle_errors=handle_errors)
             except Exception, e:
+                if not ILocation.providedBy(e):
+                    # Make sure it's properly located.
+                    e = LocationProxy(e)
+                    locate(e, root, 'error')
                 response = queryMultiAdapter(
                     (component.request, e), IHTTPResponse)
                 if response is None:
@@ -102,6 +106,9 @@ def dawnlight_publisher(request, application):
 def exception_view(request, exception):
     view = queryMultiAdapter((exception, request), IHTTPRenderer)
     if view is not None:
+        # Make sure it's properly located.
+        located = LocationProxy(view)
+        locate(view, exception, name='exception')
         return view()
     return None
 

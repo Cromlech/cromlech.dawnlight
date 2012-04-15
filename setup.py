@@ -3,7 +3,7 @@
 from os.path import join
 from setuptools import setup, find_packages
 
-version = '0.5'
+version = '0.5.1'
 
 install_requires = [
     'cromlech.browser >= 0.4',
