@@ -8,6 +8,8 @@ Changelog
   are not subject to any change. They simply need to provide `Ilocation` to
   avoid unwanted relocation.
 
+- keep original traceback info in PublicationErrorBubble
+
 
 0.5 (2012-01-30)
 ----------------
