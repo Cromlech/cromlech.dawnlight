@@ -30,29 +30,29 @@ def query_view(request, obj, name=""):
     return queryMultiAdapter((obj, request), IView, name=name)
 
 
-def renderer_locator(func):
+def view_locator(func):
     """Can be used as a decorator on the `query_view` function.
-    It provides a way to relate the looked up renderer with its lookup
+    It provides a way to relate the looked up view with its lookup
     context.
     """
-    def locate_renderer(request, obj, name=""):
-        renderer = func(request, obj, name=name)
-        if renderer is not None:
-            if not ILocation.providedBy(renderer):
-                renderer = LocationProxy(renderer)
-            locate(renderer, name=name, parent=obj)
-        return renderer
-    return locate_renderer
+    def locate_view(request, obj, name=""):
+        view = func(request, obj, name=name)
+        if view is not None:
+            if not ILocation.providedBy(view):
+                view = LocationProxy(view)
+            locate(view, name=name, parent=obj)
+        return view
+    return locate_view
 
 
-def renderer_protector(func):
-    """Can be used as a decorator on the `query_http_renderer` function.
-    It provides a way to wrap the looked up renderer in a security
+def view_protector(func):
+    """Can be used as a decorator on the `query_view` function.
+    It provides a way to wrap the looked up view in a security
     proxy, securing the component accesses.
     """
-    def protect_renderer(request, obj, name=""):
-        renderer = func(request, obj, name=name)
-        if renderer is not None:
-            return ProxyFactory(renderer)
-        return renderer
-    return protect_renderer
+    def protect_view(request, obj, name=""):
+        view = func(request, obj, name=name)
+        if view is not None:
+            return ProxyFactory(view)
+        return view
+    return protect_view

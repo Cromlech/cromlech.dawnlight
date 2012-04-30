@@ -6,11 +6,11 @@ import sys
 import dawnlight
 import grokcore.component as grok
 
-from cromlech.browser import IView, IRequest, IResponseFactory
+from cromlech.browser import IRequest, IResponse
+from cromlech.browser import IPublisher, IView, IResponseFactory
 from cromlech.dawnlight import IDawnlightApplication
 from cromlech.dawnlight.lookup import ModelLookup, ViewLookup
 from cromlech.dawnlight.utils import safe_path
-from cromlech.io.interfaces import IPublisher
 from zope.component import queryMultiAdapter, queryAdapter
 from zope.component.interfaces import ComponentLookupError
 from zope.location import LocationProxy, locate, ILocation
