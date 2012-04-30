@@ -2,7 +2,7 @@
 
 from urllib import unquote
 
-from cromlech.browser.interfaces import IHTTPRenderer
+from cromlech.browser.interfaces import IView
 from zope.component import queryMultiAdapter
 from zope.location import ILocation, LocationProxy, locate
 
@@ -26,12 +26,12 @@ def safe_path(path):
     return path
 
 
-def query_http_renderer(request, obj, name=""):
-    return queryMultiAdapter((obj, request), IHTTPRenderer, name=name)
+def query_view(request, obj, name=""):
+    return queryMultiAdapter((obj, request), IView, name=name)
 
 
 def renderer_locator(func):
-    """Can be used as a decorator on the `query_http_renderer` function.
+    """Can be used as a decorator on the `query_view` function.
     It provides a way to relate the looked up renderer with its lookup
     context.
     """

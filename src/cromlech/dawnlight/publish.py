@@ -6,12 +6,12 @@ import sys
 import dawnlight
 import grokcore.component as grok
 
-from cromlech.browser import IHTTPRenderer, IHTTPRequest, IHTTPResponse
+from cromlech.browser import IView, IRequest, IResponseFactory
 from cromlech.dawnlight import IDawnlightApplication
 from cromlech.dawnlight.lookup import ModelLookup, ViewLookup
 from cromlech.dawnlight.utils import safe_path
 from cromlech.io.interfaces import IPublisher
-from zope.component import queryMultiAdapter
+from zope.component import queryMultiAdapter, queryAdapter
 from zope.component.interfaces import ComponentLookupError
 from zope.location import LocationProxy, locate, ILocation
 from zope.proxy import removeAllProxies
@@ -36,7 +36,7 @@ def safeguard(func):
                     e = LocationProxy(e)
                     locate(e, root, 'error')
                 response = queryMultiAdapter(
-                    (component.request, e), IHTTPResponse)
+                    (component.request, e), IView)
                 if response is None:
                     raise
             return response
@@ -83,60 +83,36 @@ class DawnlightPublisher(object):
         stack = dawnlight.parse_path(path, shortcuts)
 
         model, crumbs = self.model_lookup(self.request, root, stack)
-        if IHTTPResponse.providedBy(model):
+        if IResponse.providedBy(model):
             # The found object can be returned safely.
             return model
+        if IResponseFactory.providedBy(model):
+            return model()
 
         # The model needs an renderer
-        view = self.view_lookup(self.request, model, crumbs)
-        if view is None:
+        component = self.view_lookup(self.request, model, crumbs)
+        if component is None:
             raise PublicationError('%r can not be rendered.' % model)
-        return IHTTPResponse(view)
+
+        # This renderer needs to be resolved into an IResponse
+        factory = IResponseFactory(component)
+        return factory()
 
 
-@grok.adapter(IHTTPRequest, IDawnlightApplication)
+@grok.adapter(IRequest, IDawnlightApplication)
 @grok.implementer(IPublisher)
 def dawnlight_publisher(request, application):
     return DawnlightPublisher(
         request, application, base_model_lookup, base_view_lookup)
 
 
-@grok.adapter(IHTTPRequest, Exception)
-@grok.implementer(IHTTPResponse)
+@grok.adapter(IRequest, Exception)
+@grok.implementer(IResponseFactory)
 def exception_view(request, exception):
-    view = queryMultiAdapter((exception, request), IHTTPRenderer)
+    view = queryMultiAdapter((exception, request), IView)
     if view is not None:
         # Make sure it's properly located.
         located = LocationProxy(view)
         locate(view, exception, name='exception')
-        return view()
+        return IResponseFactory(view)
     return None
-
-
-@grok.adapter(IHTTPRenderer)
-@grok.implementer(IHTTPResponse)
-def publish_http_renderer(renderer):
-    """Adaptation has a tendency to shadow some kind of errors.
-    More precisely, non-handled ComponentLookupError can be seen
-    as an adaptation failure while they originate from deeper in the
-    code. That's why we cover that basis.
-    """
-    try:
-        return renderer()
-    except ComponentLookupError as e:
-
-        # The render is likely to be wrapped in a security proxy.
-        # We get rid of that proxy to access the component freely.
-        view = removeAllProxies(renderer)
-
-        # Locating the error allows us to know more about the failure
-        # context. We use the context of the view, as we might have
-        # removed the location proxy of the view.
-        error = LocationProxy(e)
-        locate(error, view.context, 'error')
-
-        # Finally, we wrap the error in a 'bubble', keeping its traceback
-        # and we raise the bubble. A bubble is an error that is internal
-        # to the publisher. The publisher will then decide what to do with
-        # that wrapped error.
-        raise PublicationErrorBubble(error, sys.exc_info())

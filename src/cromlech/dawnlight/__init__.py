@@ -12,8 +12,8 @@ from dawnlight import ResolveError  # exposing for convenience.
 
 from cromlech.dawnlight.directives import traversable
 from cromlech.dawnlight.lookup import ModelLookup, ViewLookup
-from cromlech.dawnlight.utils import query_http_renderer
-from cromlech.dawnlight.utils import renderer_locator, renderer_protector
+from cromlech.dawnlight.utils import query_view
+from cromlech.dawnlight.utils import view_locator, view_protector
 
 from cromlech.dawnlight.publish import DawnlightPublisher
 from cromlech.dawnlight.publish import PublicationError, PublicationErrorBubble

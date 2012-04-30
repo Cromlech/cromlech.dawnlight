@@ -6,8 +6,7 @@ from setuptools import setup, find_packages
 version = '0.5.1'
 
 install_requires = [
-    'cromlech.browser >= 0.4',
-    'cromlech.io >= 0.2a1',
+    'cromlech.browser >= 0.5',
     'dawnlight >= 0.13b2',
     'grokcore.component >= 2.4',
     'martian',

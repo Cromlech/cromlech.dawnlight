@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from cromlech.browser import IHTTPRenderer
-from cromlech.dawnlight.utils import query_http_renderer
+from cromlech.browser import IView
+from cromlech.dawnlight.utils import query_view
 from dawnlight import DEFAULT, VIEW, ResolveError
 from dawnlight import ModelLookup as BaseModelLookup
-from dawnlight.interfaces import IConsumer
-from dawnlight.interfaces import ILookupComponent
+from dawnlight.interfaces import IConsumer, ILookupComponent
 from grokcore.component import querySubscriptions
 from zope.interface import implements
 
@@ -32,7 +31,7 @@ class ViewLookup(object):
     """
     implements(ILookupComponent)
 
-    def __init__(self, lookup=query_http_renderer, default_name=u'index'):
+    def __init__(self, lookup=query_view, default_name=u'index'):
         self.lookup = lookup
         self.default_name = default_name
 
@@ -55,7 +54,7 @@ class ViewLookup(object):
                 "Can't resolve view: namespace %r is not supported." % ns)
 
         # If this is the last node AND if it's a view, we return it.
-        if default_fallback and IHTTPRenderer.providedBy(obj):
+        if default_fallback and IView.providedBy(obj):
             return obj
 
         # Else, we need to resolve the model into a view.
