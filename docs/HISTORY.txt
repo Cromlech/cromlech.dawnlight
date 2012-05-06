@@ -1,6 +1,18 @@
 Changelog
 =========
 
+0.6 (2012-05-06)
+----------------
+
+- Using now the last changes on the `cromlech.browser` package.
+  Queried view components are `IView` providers and are rendered
+  thanks to the `IResponseFactory` adaptation.
+
+- The publisher is no longer instantiated with a request and an application.
+  It only takes the lookup utilities. The request is provided at publication
+  time, with the root object.
+
+
 0.5.1 (2012-04-15)
 ------------------
 

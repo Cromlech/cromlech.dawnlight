@@ -2,21 +2,9 @@
 
 from urllib import unquote
 
-from cromlech.browser.interfaces import IView
+from cromlech.browser.interfaces import IView, IResponseFactory
 from zope.component import queryMultiAdapter
 from zope.location import ILocation, LocationProxy, locate
-
-try:
-    from zope.security.proxy import ProxyFactory
-except ImportError:
-
-    def ProxyFactory(obj):
-        """A replacement that raises an error.
-        """
-        raise NotImplementedError(
-            'No security factory as been registered. '
-            'Unable to protect %r. Please see `zope.security` '
-            'for more information regarding security proxies.')
 
 
 def safe_path(path):
@@ -45,14 +33,21 @@ def view_locator(func):
     return locate_view
 
 
-def view_protector(func):
-    """Can be used as a decorator on the `query_view` function.
-    It provides a way to wrap the looked up view in a security
-    proxy, securing the component accesses.
-    """
-    def protect_view(request, obj, name=""):
-        view = func(request, obj, name=name)
-        if view is not None:
-            return ProxyFactory(view)
-        return view
-    return protect_view
+def safeguard(func):
+    def publish_handle_errors(publisher, request, root, handle_errors=True):
+        if handle_errors is True:
+            try:
+                response = func(publisher, request, root, handle_errors)
+            except Exception, e:
+                if not ILocation.providedBy(e):
+                    # Make sure it's properly located.
+                    e = LocationProxy(e)
+                    locate(e, root, 'error')
+                factory = queryMultiAdapter((request, e), IResponseFactory)
+                if factory is not None:
+                    response = factory()
+                else:
+                    raise
+            return response
+        return func(publisher, root, handle_errors=handle_errors)
+    return publish_handle_errors
