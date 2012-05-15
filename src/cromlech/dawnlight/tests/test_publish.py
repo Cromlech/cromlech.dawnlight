@@ -144,6 +144,14 @@ def test_publisher_basics():
     assert verifyObject(IPublisher, publisher)
 
 
+def test_unicode_script_name():
+    root = get_structure()
+    publisher = DawnlightPublisher()
+
+    req = TestRequest(path=u"/éléonore", script_name=u'/')
+    assert publisher.publish(req, root) == root[u"éléonore"]
+    
+
 def test_path_parsing():
     root = get_structure()
     publisher = DawnlightPublisher()

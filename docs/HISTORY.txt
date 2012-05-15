@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.6.1 (2012-05-15)
+------------------
+
+- Fixed a bug when the script_name was a unicode string.
+
+
 0.6 (2012-05-06)
 ----------------
 

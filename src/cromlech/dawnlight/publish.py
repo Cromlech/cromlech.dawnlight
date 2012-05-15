@@ -20,6 +20,12 @@ base_model_lookup = ModelLookup()
 base_view_lookup = ViewLookup()
 
 
+def safe_unicode(str, enc='utf-8'):
+    if isinstance(str, unicode):
+        return str
+    return unicode(str, enc)
+
+
 class PublicationError(Exception):
     pass
 
@@ -37,7 +43,7 @@ class DawnlightPublisher(object):
 
     def base_path(self, request):
         path = safe_path(request.path)
-        script_name = unicode(request.script_name, 'utf-8')
+        script_name = safe_unicode(request.script_name)
         if path.startswith(script_name):
             return path[len(script_name):]
         return path
