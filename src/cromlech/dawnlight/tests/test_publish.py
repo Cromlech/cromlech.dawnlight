@@ -14,7 +14,7 @@ from cromlech.browser import IView, IResponseFactory, IRenderable
 from cromlech.browser.testing import TestRequest, TestResponse
 from cromlech.dawnlight import DawnlightPublisher
 from cromlech.dawnlight import ResolveError, PublicationError
-from cromlech.dawnlight import traversable
+from cromlech.dawnlight import traversable, safeguard
 
 from zope.interface import Interface, implements
 from zope.testing.cleanup import cleanUp
@@ -331,6 +331,10 @@ def test_unproxification():
     assert publisher.publish(req, root) == (
         u"AttributeError on <class 'cromlech.dawnlight.tests."
         u"test_publish.Container'>")
+
+    # we test the error handling deactivation
+    with pytest.raises(AttributeError):
+        assert publisher.publish(req, root, handle_errors=False)
 
 
 class NotImplementedView(RawView):

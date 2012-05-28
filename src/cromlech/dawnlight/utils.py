@@ -49,5 +49,5 @@ def safeguard(func):
                 else:
                     raise
             return response
-        return func(publisher, root, handle_errors=handle_errors)
+        return func(publisher, request, root, handle_errors=handle_errors)
     return publish_handle_errors
