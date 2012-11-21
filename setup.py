@@ -3,13 +3,13 @@
 from os.path import join
 from setuptools import setup, find_packages
 
-version = '0.6.2'
+version = '1.0dev-crom'
 
 install_requires = [
     'cromlech.browser >= 0.5',
     'dawnlight >= 0.13b2',
-    'grokcore.component >= 2.4',
-    'martian',
+    'crom',
+    'grokker',
     'setuptools',
     'zope.component',
     'zope.interface',

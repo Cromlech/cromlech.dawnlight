@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import grokcore.component as grok
+import crom
 from dawnlight import DEFAULT
 from dawnlight.interfaces import IConsumer
 from cromlech.browser.interfaces import ITraverser
@@ -24,16 +24,20 @@ def traverse(consumer, request, obj, stack):
     return True, next_obj, stack
 
 
-class AttributeConsumer(grok.Subscription):
+@crom.adapter
+@crom.sources(Interface)
+@crom.target(IConsumer)
+@crom.implements(ITarget)
+@crom.order(1100)
+class AttributeConsumer(object):
     """Default path consumer for model lookup, traversing objects
     using their attributes that are declared traversable through
     traversable directive
     """
-    grok.implements(IConsumer)
-    grok.context(Interface)
-    grok.order(1100)  # intend to be first !
-
     __call__ = traverse
+
+    def __init__(self, context):
+        self.context = context
 
     def _resolve(self, obj, ns, name, request):
         name = name.encode('utf-8') if isinstance(name, unicode) else name
@@ -45,15 +49,19 @@ class AttributeConsumer(grok.Subscription):
         return None
 
 
-class ItemConsumer(grok.Subscription):
+@crom.adapter
+@crom.sources(Interface)
+@crom.target(IConsumer)
+@crom.implements(ITarget)
+@crom.order(1000)
+class ItemConsumer(object):
     """Default path consumer for model lookup, traversing objects
     using their attributes or, as second choice, contained items.
     """
-    grok.implements(IConsumer)
-    grok.context(Interface)
-    grok.order(1000)  # intend to be second !
-
     __call__ = traverse
+
+    def __init__(self, context):
+        self.context = context
 
     def _resolve(self, obj, ns, name, request):
         if ns == DEFAULT:
@@ -65,17 +73,22 @@ class ItemConsumer(grok.Subscription):
         return None
 
 
-class TraverserConsumer(grok.Subscription):
+@crom.adapter
+@crom.sources(Interface)
+@crom.target(IConsumer)
+@crom.implements(ITarget)
+@crom.order(900)
+class TraverserConsumer(object):
     """Consumer for model lookup, using traversing by adaptation
     to ITraverser.
     """
-    grok.implements(IConsumer)
-    grok.context(Interface)
-    grok.order(900)  # intend to be third !
-
     __call__ = traverse
 
+    def __init__(self, context):
+        self.context = context
+
     def _resolve(self, obj, ns, name, request):
+        lookup 
         traverser = queryMultiAdapter((obj, request), ITraverser, name=ns)
         if traverser:
             return traverser.traverse(ns, name)
