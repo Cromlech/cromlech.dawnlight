@@ -6,7 +6,6 @@ from .registry import dawnlight_components
 from dawnlight import DEFAULT, VIEW, ResolveError
 from dawnlight import ModelLookup as BaseModelLookup
 from dawnlight.interfaces import IConsumer, ILookupComponent
-from grokcore.component import querySubscriptions
 from zope.interface import implements
 
 

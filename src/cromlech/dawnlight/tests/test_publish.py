@@ -2,8 +2,6 @@
 """Tests meant to be discovered by py.test"""
 
 import pytest
-import grokcore.component as grok
-from grokcore.component.testing import grok_component
 
 from dawnlight import ViewLookup
 from dawnlight.interfaces import IConsumer
