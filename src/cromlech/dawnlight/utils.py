@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from urllib import unquote
+from crom import ComponentLookupError
 from cromlech.browser.interfaces import IView, IResponseFactory
 from zope.location import ILocation, LocationProxy, locate
 
@@ -39,13 +40,13 @@ def safeguard(func):
             except Exception, e:
                 if not ILocation.providedBy(e):
                     # Make sure it's properly located.
-                    e = LocationProxy(e)
-                    locate(e, root, 'error')
-                factory = IResponseFactory(request, e)
-                if factory is not None:
+                    error = LocationProxy(e)
+                    locate(error, root, 'error')
+                try:
+                    factory = IResponseFactory(request, error)
                     response = factory()
-                else:
-                    raise
+                except ComponentLookupError:
+                    raise e
             return response
         return func(publisher, request, root, handle_errors=handle_errors)
     return publish_handle_errors
