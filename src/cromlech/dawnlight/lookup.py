@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from cromlech.browser import IView
-from cromlech.dawnlight.utils import query_view
+from .utils import query_view
+from .registry import dawnlight_components
 from dawnlight import DEFAULT, VIEW, ResolveError
 from dawnlight import ModelLookup as BaseModelLookup
 from dawnlight.interfaces import IConsumer, ILookupComponent
@@ -23,7 +24,7 @@ class ModelLookup(BaseModelLookup):
         """We use IConsumer registered in the global registry as
         subscription adapters.
         """
-        return querySubscriptions(obj, IConsumer)
+        return IConsumer.subscription(obj, lookup=dawnlight_components)
 
 
 class ViewLookup(object):

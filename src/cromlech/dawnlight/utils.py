@@ -15,7 +15,7 @@ def safe_path(path):
 
 
 def query_view(request, obj, name=""):
-    return queryMultiAdapter((obj, request), IView, name=name)
+    return IView(obj, request, name=name)
 
 
 def view_locator(func):

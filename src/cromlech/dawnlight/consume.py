@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import crom
+
+from .registry import dawnlight_components
+from .directives import traversable
+
 from dawnlight import DEFAULT
 from dawnlight.interfaces import IConsumer
-from cromlech.browser.interfaces import ITraverser
-from cromlech.dawnlight.directives import traversable
+from cromlech.browser import ITraverser
 from zope.interface import Interface
-from zope.component import queryMultiAdapter
 
 
 _marker = object()
@@ -24,11 +26,11 @@ def traverse(consumer, request, obj, stack):
     return True, next_obj, stack
 
 
-@crom.adapter
+@crom.subscription
 @crom.sources(Interface)
 @crom.target(IConsumer)
-@crom.implements(ITarget)
 @crom.order(1100)
+@crom.registry(dawnlight_components)
 class AttributeConsumer(object):
     """Default path consumer for model lookup, traversing objects
     using their attributes that are declared traversable through
@@ -49,11 +51,11 @@ class AttributeConsumer(object):
         return None
 
 
-@crom.adapter
+@crom.subscription
 @crom.sources(Interface)
 @crom.target(IConsumer)
-@crom.implements(ITarget)
 @crom.order(1000)
+@crom.registry(dawnlight_components)
 class ItemConsumer(object):
     """Default path consumer for model lookup, traversing objects
     using their attributes or, as second choice, contained items.
@@ -73,11 +75,11 @@ class ItemConsumer(object):
         return None
 
 
-@crom.adapter
+@crom.subscription
 @crom.sources(Interface)
 @crom.target(IConsumer)
-@crom.implements(ITarget)
 @crom.order(900)
+@crom.registry(dawnlight_components)
 class TraverserConsumer(object):
     """Consumer for model lookup, using traversing by adaptation
     to ITraverser.
@@ -88,8 +90,7 @@ class TraverserConsumer(object):
         self.context = context
 
     def _resolve(self, obj, ns, name, request):
-        lookup 
-        traverser = queryMultiAdapter((obj, request), ITraverser, name=ns)
+        traverser = ITraverser(obj, request, name=ns)
         if traverser:
             return traverser.traverse(ns, name)
         return None

@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
+import crom
 import dawnlight
-import grokcore.component as grok
+
+from .lookup import ModelLookup, ViewLookup
+from .utils import safe_path, safeguard
 
 from cromlech.browser import IRequest, IResponse
 from cromlech.browser import IPublisher, IView, IResponseFactory
-from cromlech.dawnlight.lookup import ModelLookup, ViewLookup
-from cromlech.dawnlight.utils import safe_path, safeguard
+
 from zope.interface import implements
 from zope.component import queryMultiAdapter
 from zope.location import LocationProxy, locate
@@ -30,10 +32,10 @@ class PublicationError(Exception):
     pass
 
 
+@crom.implements(IPublisher)
 class DawnlightPublisher(object):
     """A publisher using model and view lookup components.
     """
-    implements(IPublisher)
 
     def __init__(self,
                  model_lookup=base_model_lookup,
@@ -57,6 +59,7 @@ class DawnlightPublisher(object):
         if IResponse.providedBy(model):
             # The found object can be returned safely.
             return model
+
         if IResponseFactory.providedBy(model):
             return model()
 
@@ -70,10 +73,11 @@ class DawnlightPublisher(object):
         return factory()
 
 
-@grok.adapter(IRequest, Exception)
-@grok.implementer(IResponseFactory)
+@crom.adapter
+@crom.sources(IRequest, Exception)
+@crom.target(IResponseFactory)
 def exception_view(request, exception):
-    view = queryMultiAdapter((exception, request), IView)
+    view = IView(exception, request)
     if view is not None:
         # Make sure it's properly located.
         located = LocationProxy(view)

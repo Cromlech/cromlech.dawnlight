@@ -3,15 +3,14 @@
 Some directives related to traversal
 """
 
-import martian
+from grokker import validator, ArgsDirective
 
 
-class traversable(martian.Directive):
-    """specify wich attributes are traversable
-    """
-    scope = martian.CLASS_OR_MODULE
-    store = martian.ONCE
-    default = []
+def freeze(component, name, value):
+    frozen = frozenset(value)
+    setattr(component, name, value)
+    
 
-    def factory(self, *attrs):
-        return frozenset(attrs)
+traversable = ArgsDirective(
+    'traversable', 'dawnlight',
+    validator=validator.str_validator, set_policy=freeze)

@@ -2,11 +2,11 @@
 
 from dawnlight import ResolveError  # exposing for convenience.
 
-from cromlech.dawnlight.directives import traversable
-from cromlech.dawnlight.lookup import ModelLookup, ViewLookup
-from cromlech.dawnlight.utils import query_view
-from cromlech.dawnlight.utils import view_locator, safeguard
+from .registry import dawnlight_components
+from .directives import traversable
+from .lookup import ModelLookup, ViewLookup
+from .utils import query_view
+from .utils import view_locator, safeguard
 
-from cromlech.dawnlight.publish import DawnlightPublisher, PublicationError
-from cromlech.dawnlight.consume import AttributeConsumer, ItemConsumer
-from cromlech.dawnlight.consume import TraverserConsumer
+from .publish import DawnlightPublisher, PublicationError
+from .consume import AttributeConsumer, ItemConsumer, TraverserConsumer
