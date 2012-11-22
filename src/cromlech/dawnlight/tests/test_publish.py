@@ -18,8 +18,7 @@ from cromlech.dawnlight import traversable, safeguard
 
 from zope.interface import Interface, implements
 from zope.testing.cleanup import cleanUp
-from zope.component import (
-    queryMultiAdapter, provideAdapter, ComponentLookupError)
+from crom import ComponentLookupError
 from zope.location import LocationProxy
 from zope.interface.verify import verifyObject
 

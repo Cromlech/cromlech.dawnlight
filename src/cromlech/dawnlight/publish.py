@@ -10,7 +10,6 @@ from cromlech.browser import IRequest, IResponse
 from cromlech.browser import IPublisher, IView, IResponseFactory
 
 from zope.interface import implements
-from zope.component import queryMultiAdapter
 from zope.location import LocationProxy, locate
 
 

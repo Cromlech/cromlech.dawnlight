@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from urllib import unquote
-
 from cromlech.browser.interfaces import IView, IResponseFactory
-from zope.component import queryMultiAdapter
 from zope.location import ILocation, LocationProxy, locate
 
 
@@ -43,7 +41,7 @@ def safeguard(func):
                     # Make sure it's properly located.
                     e = LocationProxy(e)
                     locate(e, root, 'error')
-                factory = queryMultiAdapter((request, e), IResponseFactory)
+                factory = IResponseFactory(request, e)
                 if factory is not None:
                     response = factory()
                 else:

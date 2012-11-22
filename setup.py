@@ -11,7 +11,6 @@ install_requires = [
     'crom',
     'grokker',
     'setuptools',
-    'zope.component',
     'zope.interface',
     'zope.location',
     'zope.proxy',
