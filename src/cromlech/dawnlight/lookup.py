@@ -23,7 +23,8 @@ class ModelLookup(BaseModelLookup):
         """We use IConsumer registered in the global registry as
         subscription adapters.
         """
-        return IConsumer.subscription(obj, lookup=dawnlight_components)
+        return IConsumer.subscription(
+            obj, lookup=dawnlight_components, subscribe=True)
 
 
 class ViewLookup(object):
