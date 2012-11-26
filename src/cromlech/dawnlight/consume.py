@@ -9,6 +9,7 @@ from dawnlight import DEFAULT
 from dawnlight.interfaces import IConsumer
 from cromlech.browser import ITraverser
 from zope.interface import Interface
+from zope.interface.interfaces import ComponentLookupError
 
 
 _marker = object()
@@ -90,7 +91,10 @@ class TraverserConsumer(object):
         self.context = context
 
     def _resolve(self, obj, ns, name, request):
-        traverser = ITraverser(obj, request, name=ns)
-        if traverser:
-            return traverser.traverse(ns, name)
+        try:
+            traverser = ITraverser(obj, request, name=ns)
+            if traverser:
+                return traverser.traverse(ns, name)
+        except ComponentLookupError:
+            pass
         return None
