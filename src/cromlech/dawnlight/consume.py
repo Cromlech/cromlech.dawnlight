@@ -43,8 +43,8 @@ class AttributeConsumer(object):
 
     def _resolve(self, obj, ns, name, request):
         name = name.encode('utf-8') if isinstance(name, unicode) else name
-        traversables_attrs = traversable.bind().get(self.context)
-        if ns == DEFAULT and name in traversables_attrs:
+        traversables_attrs = traversable.get(self.context)
+        if traversables_attrs and ns == DEFAULT and name in traversables_attrs:
             attr = getattr(obj, name, _marker)
             if attr is not _marker:
                 return attr
