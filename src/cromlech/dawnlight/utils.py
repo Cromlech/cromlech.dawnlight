@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from urllib import unquote
+import sys
+import inspect
 
+from urllib import unquote
 from cromlech.browser.interfaces import IView, IResponseFactory
 from zope.component import queryMultiAdapter
 from zope.location import ILocation, LocationProxy, locate
@@ -45,7 +47,14 @@ def safeguard(func):
                     locate(e, root, 'error')
                 factory = queryMultiAdapter((request, e), IResponseFactory)
                 if factory is not None:
-                    response = factory()
+                    # Error views can get the traceback
+                    # This violates the IResponseFactory __call__ contract
+                    # Maybe this should be reviewed
+                    if 'exc_info' in inspect.getargspec(factory.__call__).args:
+                        exc_info = sys.exc_info()
+                        response = factory(exc_info=exc_info)
+                    else:
+                        response = factory()
                 else:
                     raise
             return response

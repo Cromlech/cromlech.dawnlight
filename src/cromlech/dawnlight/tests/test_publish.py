@@ -295,7 +295,7 @@ def test_uncomplete_publication():
 class AttributeErrorView(RawView):
     implements(IResponseFactory)
 
-    def __call__(self):
+    def __call__(self, exc_info):
         return u"AttributeError on %s" % self.context.__parent__.__class__
 
 
@@ -340,7 +340,7 @@ def test_unproxification():
 class NotImplementedView(RawView):
     implements(IResponseFactory)
 
-    def __call__(self):
+    def __call__(self, exc_info):
         return u"Not implemented: %s" % self.__parent__
 
 
@@ -353,7 +353,7 @@ class FaultyInit(RawView):
 
 class FaultyCaller(RawView):
     implements(IResponseFactory)
-    
+
     def __call__(self):
         raise NotImplementedError('call failed')
 
