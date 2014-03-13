@@ -8,6 +8,8 @@ from cromlech.browser.interfaces import IView, IResponseFactory
 from zope.component import queryMultiAdapter
 from zope.location import ILocation, LocationProxy, locate
 
+from .interfaces import ITracebackAware
+
 
 def safe_path(path):
     path = unquote(path)
@@ -47,14 +49,10 @@ def safeguard(func):
                     locate(e, root, 'error')
                 factory = queryMultiAdapter((request, e), IResponseFactory)
                 if factory is not None:
-                    # Error views can get the traceback
-                    # This violates the IResponseFactory __call__ contract
-                    # Maybe this should be reviewed
-                    if 'exc_info' in inspect.getargspec(factory.__call__).args:
+                    if ITracebackAware.providedBy(factory):
                         exc_info = sys.exc_info()
-                        response = factory(exc_info=exc_info)
-                    else:
-                        response = factory()
+                        factory.set_exc_info(exc_info)
+                    response = factory()
                 else:
                     raise
             return response
