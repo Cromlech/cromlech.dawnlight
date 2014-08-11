@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
+import sys
 from urllib import unquote
 from crom import ComponentLookupError
 from cromlech.browser.interfaces import IView, IResponseFactory
 from zope.location import ILocation, LocationProxy, locate
+from .interfaces import ITracebackAware
 
 
 def safe_path(path):
@@ -44,6 +46,9 @@ def safeguard(func):
                     locate(error, root, 'error')
                 try:
                     factory = IResponseFactory(request, error)
+                    if ITracebackAware.providedBy(factory):
+                        exc_info = sys.exc_info()
+                        factory.set_exc_info(exc_info)
                     response = factory()
                 except ComponentLookupError:
                     raise e
