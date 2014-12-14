@@ -4,6 +4,7 @@ import crom
 
 from .registry import dawnlight_components
 from .directives import traversable
+from .publish import safe_unicode
 
 from dawnlight import DEFAULT
 from dawnlight.interfaces import IConsumer
@@ -43,7 +44,7 @@ class AttributeConsumer(object):
         self.context = context
 
     def _resolve(self, obj, ns, name, request):
-        name = name.encode('utf-8') if isinstance(name, unicode) else name
+        name = safe_unicode(name, 'utf-8')
         traversables_attrs = traversable.get(self.context)
         if traversables_attrs and ns == DEFAULT and name in traversables_attrs:
             attr = getattr(obj, name, _marker)

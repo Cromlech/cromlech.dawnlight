@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import sys
 import crom
 import dawnlight
 
@@ -21,10 +22,19 @@ base_model_lookup = ModelLookup()
 base_view_lookup = ViewLookup()
 
 
-def safe_unicode(str, enc='utf-8'):
-    if isinstance(str, unicode):
-        return str
-    return unicode(str, enc)
+if sys.version < '3':
+    from urllib import unquote
+    
+    def safe_unicode(value, enc='utf-8'):
+        if isinstance(value, unicode):
+            return value
+        return unicode(value, enc)
+else:
+    # py3 compatibility
+    from urllib.parse import unquote
+
+    def safe_unicode(value, enc='utf-8'):
+        return str(value, enc)
 
 
 class PublicationError(Exception):

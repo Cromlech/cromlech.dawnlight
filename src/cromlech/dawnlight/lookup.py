@@ -6,7 +6,7 @@ from .registry import dawnlight_components
 from dawnlight import DEFAULT, VIEW, ResolveError
 from dawnlight import ModelLookup as BaseModelLookup
 from dawnlight.interfaces import IConsumer, ILookupComponent
-from zope.interface import implements
+from zope.interface import implementer
 
 
 class ModelLookup(BaseModelLookup):
@@ -27,10 +27,10 @@ class ModelLookup(BaseModelLookup):
             obj, lookup=dawnlight_components, subscribe=True)
 
 
+@implementer(ILookupComponent)
 class ViewLookup(object):
     """Looks up a view using a given method.
     """
-    implements(ILookupComponent)
 
     def __init__(self, lookup=query_view, default_name=u'index'):
         self.lookup = lookup

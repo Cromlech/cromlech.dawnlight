@@ -1,11 +1,17 @@
 # -*- coding: utf-8 -*-
 
 import sys
-from urllib import unquote
 from crom import ComponentLookupError
 from cromlech.browser.interfaces import IView, IResponseFactory
 from zope.location import ILocation, LocationProxy, locate
 from .interfaces import ITracebackAware
+
+# py3 compatibility
+try:
+    from urllib.parse import unquote
+    unicode = str
+except ImportError:
+    from urllib import unquote
 
 
 def safe_path(path):
@@ -39,7 +45,7 @@ def safeguard(func):
         if handle_errors is True:
             try:
                 response = func(publisher, request, root, handle_errors)
-            except Exception, e:
+            except Exception as e:
                 if not ILocation.providedBy(e):
                     # Make sure it's properly located.
                     error = LocationProxy(e)
