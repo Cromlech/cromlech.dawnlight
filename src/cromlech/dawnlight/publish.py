@@ -24,19 +24,17 @@ base_view_lookup = ViewLookup()
 
 if sys.version < '3':
     from urllib import unquote
-    
-    def safe_unicode(value, enc='utf-8'):
-        if isinstance(value, unicode):
-            return value
-        return unicode(value, enc)
 else:
-    # py3 compatibility
     from urllib.parse import unquote
-
-    def safe_unicode(value, enc='utf-8'):
-        return str(value, enc)
+    unicode = str
 
 
+def safe_unicode(value, enc='utf-8'):
+    if isinstance(value, unicode):
+        return value
+    return unicode(value, enc)
+
+    
 class PublicationError(Exception):
     pass
 
