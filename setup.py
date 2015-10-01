@@ -3,7 +3,7 @@
 from os.path import join
 from setuptools import setup, find_packages
 
-version = '1.0dev-crom'
+version = '1.0+crom.dev'
 
 install_requires = [
     'cromlech.browser >= 0.5',
