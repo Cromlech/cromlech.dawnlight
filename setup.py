@@ -26,7 +26,7 @@ setup(
     name='cromlech.dawnlight',
     version=version,
     description="Dawnlight publisher for Cromlech applications.",
-    long_description=(open("README.txt").read() + "\n\n" +
+    long_description=(open("README.md").read() + "\n\n" +
                       open(join("docs", "HISTORY.txt")).read()),
     classifiers=[
         "Programming Language :: Python",
