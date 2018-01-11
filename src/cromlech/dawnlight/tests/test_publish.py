@@ -1,24 +1,75 @@
 # -*- coding: utf-8 -*-
-"""Tests meant to be discovered by py.test"""
 
+import crom
 import pytest
 
+from collections import deque
+from crom import testing
+from crom.implicit import implicit
 from dawnlight import ViewLookup
 from dawnlight.interfaces import IConsumer
 
+from cromlech.dawnlight.registry import dawnlight_components
 from cromlech.browser import IPublisher, ITraverser
 from cromlech.browser import IRequest, IResponse
 from cromlech.browser import IView, IResponseFactory, IRenderable
-from cromlech.browser.testing import TestRequest, TestResponse
+from cromlech.browser.testing import TestRequest as Request
 from cromlech.dawnlight import DawnlightPublisher
 from cromlech.dawnlight import ResolveError, PublicationError
 from cromlech.dawnlight import traversable, safeguard
+from cromlech.dawnlight.utils import query_view
 
-from zope.interface import Interface, implements
+from zope.interface import Interface, implementer
 from zope.testing.cleanup import cleanUp
 from crom import ComponentLookupError
-from zope.location import LocationProxy
+from zope.location import LocationProxy, ILocation
 from zope.interface.verify import verifyObject
+
+
+@traversable('a', '_b', 'à')
+class Container(dict):
+
+    a = None
+    _b = None
+    c = None
+
+
+class IModel(Interface):
+    pass
+
+
+@implementer(IModel)
+class Model(object):
+    pass
+
+
+@implementer(ILocation, IView, IRenderable)
+class RawView(object):
+
+    __parent__ = None
+    __name__ = None
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+    def update(self):
+        pass
+
+    def render(self):
+        return self.context
+
+
+@implementer(ITraverser)
+class SpamTraverser(object):
+    """a traverser that seeks for attribute _spam_<name>
+    """
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+    def traverse(self, ns, name):
+        return getattr(self.context, '_spam_%s' % name)
 
 
 class FailingProxy(LocationProxy):
@@ -37,8 +88,8 @@ class FailingProxy(LocationProxy):
         return LocationProxy.__getattribute__(self, name)
 
 
+@implementer(IResponseFactory)
 class RenderableResponseFactory(object):
-    implements(IResponseFactory)
 
     def __init__(self, component):
         self.component = component
@@ -51,49 +102,19 @@ class RenderableResponseFactory(object):
         return self.component.context
 
 
-class Container(dict):
+def setup_module(module):
+    import cromlech.dawnlight
 
-    traversable('a', '_b', 'à')
-
-    a = None
-    _b = None
-    c = None
-
-
-class IModel(Interface):
-    pass
+    testing.setup()
+    crom.configure(cromlech.dawnlight)
+    crom.implicit.registry.register(
+        (Interface, IRequest), IView, 'index', RawView)
+    crom.implicit.registry.register(
+        (IRenderable,), IResponseFactory, '', RenderableResponseFactory)
 
 
-class Model(object):
-    implements(IModel)
-
-
-class RawView(object):
-    grok.implements(IView, IRenderable)
-
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
-
-    def update(self):
-        pass
-
-    def render(self):
-        return self.context
-
-
-class SpamTraverser(object):
-    """a traverser that seeks for attribute _spam_<name>
-    """
-
-    grok.implements(ITraverser)
-
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
-
-    def traverse(self, ns, name):
-        return getattr(self.context, '_spam_%s' % name)
+def teardown_module(module):
+    testing.teardown()
 
 
 def get_structure():
@@ -113,26 +134,10 @@ def get_structure():
 
 
 def wrap_http_renderer(request, obj, name=""):
-    view = queryMultiAdapter((obj, request), IView, name=name)
+    view = query_view(request, obj, name)
     if view is not None:
         view = FailingProxy(view)
     return view
-
-
-def setup_module(module):
-    """Grok the publish module
-    """
-    grok.testing.grok("cromlech.dawnlight")
-    provideAdapter(
-        RawView, (IModel, IRequest), IView, name=u'index')
-    provideAdapter(
-        RenderableResponseFactory, (IRenderable,), IResponseFactory)
-
-
-def teardown_module(module):
-    """Undo groking
-    """
-    cleanUp()
 
 
 def test_publisher_basics():
@@ -145,7 +150,7 @@ def test_unicode_script_name():
     root = get_structure()
     publisher = DawnlightPublisher()
 
-    req = TestRequest(path=u"/éléonore", script_name=u'/')
+    req = Request(path=u"/éléonore", script_name=u'/')
     assert publisher.publish(req, root) == root[u"éléonore"]
     
 
@@ -153,7 +158,7 @@ def test_path_parsing():
     root = get_structure()
     publisher = DawnlightPublisher()
 
-    req = TestRequest(path=u"/éléonore")
+    req = Request(path=u"/éléonore")
     assert publisher.publish(req, root) == root[u"éléonore"]
 
 
@@ -162,10 +167,10 @@ def test_attribute_traversing():
     root = get_structure()
     publisher = DawnlightPublisher()
 
-    req = TestRequest(path="/a")
+    req = Request(path="/a")
     assert publisher.publish(req, root) == root.a
 
-    req = TestRequest(path="/_b")
+    req = Request(path="/_b")
     assert publisher.publish(req, root) == root._b
 
 
@@ -174,11 +179,11 @@ def test_private_attribute_not_traversing():
     root = get_structure()
     publisher = DawnlightPublisher()
 
-    req = TestRequest(path="/c")
+    req = Request(path="/c")
     with pytest.raises(ResolveError):
         publisher.publish(req, root)
 
-    req = TestRequest(path="/not_existing")
+    req = Request(path="/not_existing")
     with pytest.raises(ResolveError):
         publisher.publish(req, root)
 
@@ -189,7 +194,7 @@ def test_item_traversing():
     root = get_structure()
     publisher = DawnlightPublisher()
 
-    req = TestRequest(path="/b")
+    req = Request(path="/b")
     assert publisher.publish(req, root) == root['b']
 
 
@@ -197,10 +202,10 @@ def test_end_with_slash():
     root = get_structure()
     publisher = DawnlightPublisher()
 
-    req = TestRequest(path="/b/")
+    req = Request(path="/b/")
     assert publisher.publish(req, root) == root['b']
 
-    req = TestRequest(path="/b///")
+    req = Request(path="/b///")
     assert publisher.publish(req, root) == root['b']
 
 
@@ -211,7 +216,7 @@ def test_attribute_masquerade_item():
     root['a'] = Model()
     publisher = DawnlightPublisher()
     
-    req = TestRequest(path="/a")
+    req = Request(path="/a")
     assert publisher.publish(req, root) == root.a
     assert publisher.publish(req, root) != root['a']
 
@@ -221,13 +226,13 @@ def test_traverser_traversing():
     publisher = DawnlightPublisher()
 
     # register traverser for namespace spam
-    provideAdapter(
-        SpamTraverser, (Container, IRequest), ITraverser, name=u'spam')
+    crom.implicit.registry.register(
+        (Container, IRequest), ITraverser, 'spam', SpamTraverser)
 
-    req = TestRequest(path="/++spam++foo")
+    req = Request(path="/++spam++foo")
     assert publisher.publish(req, root) == root._spam_foo
 
-    req = TestRequest(path="/++spam++bar")
+    req = Request(path="/++spam++bar")
     with pytest.raises(AttributeError):
         publisher.publish(req, root)
 
@@ -237,14 +242,14 @@ def test_script_name():
     root = get_structure()
     publisher = DawnlightPublisher()
 
-    req = TestRequest(path="/foo/a", script_name="/foo")
+    req = Request(path="/foo/a", script_name="/foo")
     assert publisher.publish(req, root) == root.a
 
-    req = TestRequest(path="/foo/a", script_name="/bar")
+    req = Request(path="/foo/a", script_name="/bar")
     with pytest.raises(ResolveError):
         publisher.publish(req, root)
                   
-    req = TestRequest(path="/a", script_name="/foo")
+    req = Request(path="/a", script_name="/foo")
     assert publisher.publish(req, root) == root.a
 
 
@@ -254,7 +259,7 @@ def test_no_view():
     root = get_structure()
     publisher = DawnlightPublisher()
 
-    req = TestRequest(path="/b/@@unknown")
+    req = Request(path="/b/@@unknown")
     with pytest.raises(ResolveError):
         publisher.publish(req, root)
 
@@ -267,10 +272,10 @@ def test_urlencoded_path():
     root[u"â ñ"] = Model()
     publisher = DawnlightPublisher()
 
-    req = TestRequest(path="/%C3%A0")
+    req = Request(path="/%C3%A0")
     assert publisher.publish(req, root) == getattr(root, 'à')
 
-    req = TestRequest(path="/%C3%A2%20%C3%B1")
+    req = Request(path="/%C3%A2%20%C3%B1")
     assert publisher.publish(req, root) == root[u"â ñ"]
 
 
@@ -284,20 +289,20 @@ def test_uncomplete_publication():
     root = get_structure()
     publisher = DawnlightPublisher(view_lookup=no_lookup)
 
-    req = TestRequest(path="/a")
+    req = Request(path="/a")
     with pytest.raises(PublicationError):
         publisher.publish(req, root)
 
 
+@implementer(IResponseFactory)
 class AttributeErrorView(RawView):
-    implements(IResponseFactory)
 
     def __call__(self):
         return u"AttributeError on %s" % self.context.__parent__.__class__
 
 
+@implementer(IResponseFactory)
 class InnocentView(RawView):
-    implements(IResponseFactory)
 
     def __call__(self):
         return "%r is innocent !" % self.context
@@ -310,13 +315,13 @@ def test_unproxification():
     publisher = DawnlightPublisher(
         view_lookup=ViewLookup(lookup=wrap_http_renderer))
 
-    provideAdapter(
-        AttributeErrorView, (AttributeError, IRequest), IView)
+    implicit.registry.register(
+        (AttributeError, IRequest), IView, '', AttributeErrorView)
 
-    provideAdapter(
-        InnocentView, (IModel, IRequest), IView, name="innocent")
+    implicit.registry.register(
+        (IModel, IRequest), IView, 'innocent', InnocentView)
 
-    req = TestRequest(path="/a/@@innocent")
+    req = Request(path="/a/@@innocent")
     proxified = wrap_http_renderer(req, root.a, "innocent")
 
     with pytest.raises(AttributeError):
@@ -334,29 +339,29 @@ def test_unproxification():
         assert publisher.publish(req, root, handle_errors=False)
 
 
+@implementer(IResponseFactory)
 class NotImplementedView(RawView):
-    implements(IResponseFactory)
 
     def __call__(self):
         return u"Not implemented: %s" % self.__parent__
 
 
+@implementer(IResponseFactory)
 class FaultyInit(RawView):
-    implements(IResponseFactory)
 
     def __init__(self, context, request):
         raise NotImplementedError('init failed')
 
 
+@implementer(IResponseFactory)
 class FaultyCaller(RawView):
-    implements(IResponseFactory)
-    
+
     def __call__(self):
         raise NotImplementedError('call failed')
 
 
+@implementer(IResponseFactory)
 class LookupFailure(RawView):
-    implements(IResponseFactory)
 
     def __call__(self):
         raise ComponentLookupError('This is bad.')
@@ -367,58 +372,54 @@ def test_faulty_resolution():
     publisher = DawnlightPublisher()
 
     # Fail on the renderer init
-    provideAdapter(FaultyInit, (IModel, IRequest),
-                   IView, name=u'faulty_init')
+    crom.implicit.registry.register(
+        (IModel, IRequest), IView, 'faulty_init', FaultyInit)
     
-    req = TestRequest(path="/a/faulty_init")
+    req = Request(path="/a/faulty_init")
     with pytest.raises(NotImplementedError) as e:
         publisher.publish(req, root)
         assert e.value == 'init failed'
 
     # Fail in the renderer call
-    provideAdapter(FaultyCaller, (IModel, IRequest),
-                   IView, name=u'faulty_caller')
+    crom.implicit.registry.register(
+        (IModel, IRequest), IView, 'faulty_caller', FaultyCaller)
 
-    req = TestRequest(path="/a/faulty_caller")
+    req = Request(path="/a/faulty_caller")
     with pytest.raises(NotImplementedError) as e:
         publisher.publish(req, root)
 
     # We can render errors
-    provideAdapter(
-        NotImplementedView, (NotImplementedError, IRequest), IView)
+    crom.implicit.registry.register(
+        (NotImplementedError, IRequest), IView, '', NotImplementedView)
 
-    req = TestRequest(path="/a/faulty_caller")
+    req = Request(path="/a/faulty_caller")
     assert publisher.publish(req, root) == u'Not implemented: call failed'
 
     # Simulation of a component lookup error
-    provideAdapter(LookupFailure, (IModel, IRequest),
-                   IView, name=u'fail_lookup')
+    crom.implicit.registry.register(
+        (IModel, IRequest), IView, 'fail_lookup', LookupFailure)
 
-    req = TestRequest(path="/a/fail_lookup")
+    req = Request(path="/a/fail_lookup")
     with pytest.raises(ComponentLookupError) as e:
         publisher.publish(req, root)
 
 
 def test_consumer_returning_view():
 
-    class ViewReturningConsumer(grok.Subscription):
-        grok.implements(IConsumer)
-        grok.context(Interface)
+    class ViewReturningConsumer:
 
+        def __init__(self, context):
+            self.context = context
+        
         def __call__(self, request, obj, stack):
             view = RawView(obj, request)
-            return True, view, []
+            return True, view, deque()
 
-    grok_component('consumer', ViewReturningConsumer)
+    dawnlight_components.subscribe(
+        (Interface,), IConsumer, ViewReturningConsumer)
 
     root = get_structure()
     publisher = DawnlightPublisher()
 
-    req = TestRequest(path="/it_will_return_a_view")
+    req = Request(path="/it_will_return_a_view")
     assert publisher.publish(req, root) == root
-
-    # The same test fail if we don't use the provided ViewLookup
-    publisher = DawnlightPublisher(
-        view_lookup=ViewLookup(lookup=wrap_http_renderer))
-    with pytest.raises(ResolveError) as e:
-        publisher.publish(req, root) == root

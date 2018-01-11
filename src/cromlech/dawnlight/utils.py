@@ -22,7 +22,7 @@ def safe_path(path):
 
 
 def query_view(request, obj, name=""):
-    return IView(obj, request, name=name)
+    return IView(obj, request, name=name, default=None)
 
 
 def view_locator(func):

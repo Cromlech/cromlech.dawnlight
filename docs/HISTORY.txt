@@ -1,6 +1,20 @@
 Changelog
 =========
 
+0.7 (unreleased)
+----------------
+
+- Corrected directive `traversable` which policy was not doing its
+  supposed work : return a frozen set;
+
+- Corrected all tests to work with Crom;
+
+- Echoed the changes in `dawnlight`: the stack is no longer reversed
+  and is now a Deque object;
+
+- Corrected the location of error views which was wrongly set before.
+
+
 0.6.2 (2012-05-27)
 ------------------
 

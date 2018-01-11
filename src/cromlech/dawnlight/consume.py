@@ -20,10 +20,11 @@ def traverse(consumer, request, obj, stack):
     """Furnish the base consumer __call__ method delegating
     the resolution to the _resolve method.
     """
-    ns, name = stack.pop()
+    ns, name = stack.popleft()
     next_obj = consumer._resolve(obj, ns, name, request)
     if next_obj is None:
-        stack.append((ns, name))
+        # Nothing was found, we restore the stack.
+        stack.appendleft((ns, name))
         return False, obj, stack
     return True, next_obj, stack
 
@@ -67,7 +68,7 @@ class ItemConsumer(object):
     def __init__(self, context):
         self.context = context
 
-    def _resolve(self, obj, ns, name, request):
+    def _resolve(self, obj, ns, name, request):        
         if ns == DEFAULT:
             if hasattr(obj, '__getitem__'):
                 try:

@@ -4,14 +4,12 @@ import sys
 import crom
 import dawnlight
 
-from .lookup import ModelLookup, ViewLookup
-from .utils import safe_path, safeguard
-
 from cromlech.browser import IRequest, IResponse
 from cromlech.browser import IPublisher, IView, IResponseFactory
+from zope.location import ILocation, LocationProxy, locate
 
-from zope.interface import implements
-from zope.location import LocationProxy, locate
+from .lookup import ModelLookup, ViewLookup
+from .utils import safe_path, safeguard
 
 
 shortcuts = {
@@ -22,10 +20,7 @@ base_model_lookup = ModelLookup()
 base_view_lookup = ViewLookup()
 
 
-if sys.version < '3':
-    from urllib import unquote
-else:
-    from urllib.parse import unquote
+if sys.version >= '3':
     unicode = str
 
 
@@ -66,7 +61,7 @@ class DawnlightPublisher(object):
         if IResponse.providedBy(model):
             # The found object can be returned safely.
             return model
-
+        
         if IResponseFactory.providedBy(model):
             return model()
 
@@ -87,7 +82,8 @@ def exception_view(request, exception):
     view = IView(exception, request)
     if view is not None:
         # Make sure it's properly located.
-        located = LocationProxy(view)
-        locate(view, exception, name='exception')
+        if not ILocation.providedBy(view):
+            view = LocationProxy(view)
+        locate(view, parent=exception, name='exception')
         return IResponseFactory(view)
     return None
