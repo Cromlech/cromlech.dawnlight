@@ -29,7 +29,7 @@ def safe_unicode(value, enc='utf-8'):
         return value
     return unicode(value, enc)
 
-    
+
 class PublicationError(Exception):
     pass
 

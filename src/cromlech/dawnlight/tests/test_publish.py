@@ -26,7 +26,7 @@ from zope.location import LocationProxy, ILocation
 from zope.interface.verify import verifyObject
 
 
-@traversable('a', '_b', 'à')
+@traversable('a', '_b', u'à')
 class Container(dict):
 
     a = None

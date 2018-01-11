@@ -48,7 +48,9 @@ class AttributeConsumer(object):
         name = safe_unicode(name, 'utf-8')
         traversables_attrs = traversable.get(self.context)
         if traversables_attrs and ns == DEFAULT and name in traversables_attrs:
-            attr = getattr(obj, name, _marker)
+            # Attribute names are encoded.
+            attr_name = name.encode('utf-8')
+            attr = getattr(obj, attr_name, _marker)
             if attr is not _marker:
                 return attr
         return None
