@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
-import sys
 import crom
 import dawnlight
 
+from urllib.parse import unquote
 from cromlech.browser import IRequest, IResponse
 from cromlech.browser import IPublisher, IView, IResponseFactory
 from zope.location import ILocation, LocationProxy, locate
 
 from .lookup import ModelLookup, ViewLookup
-from .utils import safe_path, safeguard
+from .utils import safeguard
 
 
 shortcuts = {
@@ -18,16 +18,6 @@ shortcuts = {
 
 base_model_lookup = ModelLookup()
 base_view_lookup = ViewLookup()
-
-
-if sys.version >= '3':
-    unicode = str
-
-
-def safe_unicode(value, enc='utf-8'):
-    if isinstance(value, unicode):
-        return value
-    return unicode(value, enc)
 
 
 class PublicationError(Exception):
@@ -46,8 +36,8 @@ class DawnlightPublisher(object):
         self.view_lookup = view_lookup
 
     def base_path(self, request):
-        path = safe_path(request.path)
-        script_name = safe_unicode(request.script_name)
+        path = unquote(request.path)
+        script_name = request.script_name
         if path.startswith(script_name):
             return path[len(script_name):]
         return path
@@ -61,7 +51,7 @@ class DawnlightPublisher(object):
         if IResponse.providedBy(model):
             # The found object can be returned safely.
             return model
-        
+
         if IResponseFactory.providedBy(model):
             return model()
 

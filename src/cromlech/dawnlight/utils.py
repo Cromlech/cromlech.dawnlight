@@ -6,20 +6,6 @@ from cromlech.browser.interfaces import IView, IResponseFactory
 from zope.location import ILocation, LocationProxy, locate
 from .interfaces import ITracebackAware
 
-# py3 compatibility
-try:
-    from urllib.parse import unquote
-    unicode = str
-except ImportError:
-    from urllib import unquote
-
-
-def safe_path(path):
-    path = unquote(path)
-    if not isinstance(path, unicode):
-        return unicode(path, 'utf-8')
-    return path
-
 
 def query_view(request, obj, name=""):
     return IView(obj, request, name=name, default=None)

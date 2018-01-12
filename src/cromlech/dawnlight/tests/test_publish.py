@@ -26,7 +26,7 @@ from zope.location import LocationProxy, ILocation
 from zope.interface.verify import verifyObject
 
 
-@traversable('a', '_b', u'à')
+@traversable('a', '_b', 'à')
 class Container(dict):
 
     a = None
@@ -127,7 +127,7 @@ def get_structure():
     setattr(root, "a", Model())
     setattr(root, "_b", Model())
     setattr(root, "c", Model())
-    root[u"éléonore"] = Model()
+    root["éléonore"] = Model()
     root["b"] = Model()
     root._spam_foo = Model()
     return root
@@ -150,16 +150,16 @@ def test_unicode_script_name():
     root = get_structure()
     publisher = DawnlightPublisher()
 
-    req = Request(path=u"/éléonore", script_name=u'/')
-    assert publisher.publish(req, root) == root[u"éléonore"]
+    req = Request(path="/éléonore", script_name='/')
+    assert publisher.publish(req, root) == root["éléonore"]
     
 
 def test_path_parsing():
     root = get_structure()
     publisher = DawnlightPublisher()
 
-    req = Request(path=u"/éléonore")
-    assert publisher.publish(req, root) == root[u"éléonore"]
+    req = Request(path="/éléonore")
+    assert publisher.publish(req, root) == root["éléonore"]
 
 
 def test_attribute_traversing():
@@ -269,14 +269,14 @@ def test_urlencoded_path():
     """
     root = Container()
     setattr(root, "à", Model())
-    root[u"â ñ"] = Model()
+    root["â ñ"] = Model()
     publisher = DawnlightPublisher()
 
     req = Request(path="/%C3%A0")
     assert publisher.publish(req, root) == getattr(root, 'à')
 
     req = Request(path="/%C3%A2%20%C3%B1")
-    assert publisher.publish(req, root) == root[u"â ñ"]
+    assert publisher.publish(req, root) == root["â ñ"]
 
 
 def test_uncomplete_publication():
@@ -298,7 +298,7 @@ def test_uncomplete_publication():
 class AttributeErrorView(RawView):
 
     def __call__(self):
-        return u"AttributeError on %s" % self.context.__parent__.__class__
+        return "AttributeError on %s" % self.context.__parent__.__class__
 
 
 @implementer(IResponseFactory)
@@ -331,8 +331,8 @@ def test_unproxification():
         proxified()
 
     assert publisher.publish(req, root) == (
-        u"AttributeError on <class 'cromlech.dawnlight.tests."
-        u"test_publish.Container'>")
+        "AttributeError on <class 'cromlech.dawnlight.tests."
+        "test_publish.Container'>")
 
     # we test the error handling deactivation
     with pytest.raises(AttributeError):
@@ -343,7 +343,7 @@ def test_unproxification():
 class NotImplementedView(RawView):
 
     def __call__(self):
-        return u"Not implemented: %s" % self.__parent__
+        return "Not implemented: %s" % self.__parent__
 
 
 @implementer(IResponseFactory)
@@ -393,7 +393,7 @@ def test_faulty_resolution():
         (NotImplementedError, IRequest), IView, '', NotImplementedView)
 
     req = Request(path="/a/faulty_caller")
-    assert publisher.publish(req, root) == u'Not implemented: call failed'
+    assert publisher.publish(req, root) == 'Not implemented: call failed'
 
     # Simulation of a component lookup error
     crom.implicit.registry.register(

@@ -8,7 +8,7 @@ from grokker import validator, ArgsDirective
 
 def freeze(component, name, value):
     setattr(component, name, frozenset(value))
-    
+
 
 traversable = ArgsDirective(
     'traversable', 'dawnlight',
