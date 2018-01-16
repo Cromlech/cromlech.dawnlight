@@ -20,7 +20,6 @@ from cromlech.dawnlight import traversable, safeguard
 from cromlech.dawnlight.utils import query_view
 
 from zope.interface import Interface, implementer
-from zope.testing.cleanup import cleanUp
 from crom import ComponentLookupError
 from zope.location import LocationProxy, ILocation
 from zope.interface.verify import verifyObject

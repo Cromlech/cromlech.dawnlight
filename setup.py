@@ -17,10 +17,9 @@ install_requires = [
     ]
 
 tests_require = [
-    'cromlech.browser [test]',
+    'cromlech.browser[test]',
     'pytest',
-    'zope.testing',
-    ]
+]
 
 setup(
     name='cromlech.dawnlight',
@@ -36,7 +35,7 @@ setup(
     author_email='dolmen@list.dolmen-project.org',
     url='http://gitweb.dolmen-project.org',
     license='ZPL',
-    packages=find_packages('src', exclude=['ez_setup']),
+    packages=find_packages('src'),
     package_dir={'': 'src'},
     namespace_packages=['cromlech'],
     include_package_data=True,
@@ -44,7 +43,4 @@ setup(
     tests_require=tests_require,
     install_requires=install_requires,
     extras_require={'test': tests_require},
-    entry_points="""
-    # -*- Entry points: -*-
-    """,
-    )
+)
