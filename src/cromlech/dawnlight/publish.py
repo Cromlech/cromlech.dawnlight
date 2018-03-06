@@ -61,8 +61,10 @@ class DawnlightPublisher(object):
             raise PublicationError('%r can not be rendered.' % model)
 
         # This renderer needs to be resolved into an IResponse
-        factory = IResponseFactory(component)
-        return factory()
+        if not IResponse.providedBy(component):
+            factory = IResponseFactory(component)
+            return factory()
+        return component
 
 
 @crom.adapter

@@ -151,6 +151,14 @@ def test_unicode_script_name():
 
     req = Request(path="/éléonore", script_name='/')
     assert publisher.publish(req, root) == root["éléonore"]
+
+
+def test_empty():
+    root = get_structure()
+    publisher = DawnlightPublisher()
+
+    req = Request(path="/")
+    assert publisher.publish(req, root) == root
     
 
 def test_path_parsing():
